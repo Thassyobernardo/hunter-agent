@@ -9,7 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 import database as db
-from scrapers import upwork_scraper, reddit_scraper, twitter_scraper, linkedin_scraper
+from scrapers import upwork_scraper, google_scraper, twitter_scraper, linkedin_scraper
 
 logging.basicConfig(
     level=logging.INFO,
@@ -56,11 +56,11 @@ def run_scan():
         log.error(f"Upwork scraper error: {e}")
 
     try:
-        n = reddit_scraper.scrape(keywords)
-        log.info(f"Reddit: +{n} leads")
+        n = google_scraper.scrape(keywords)
+        log.info(f"Google: +{n} leads")
         total += n
     except Exception as e:
-        log.error(f"Reddit scraper error: {e}")
+        log.error(f"Google scraper error: {e}")
 
     try:
         n = twitter_scraper.scrape(keywords)
