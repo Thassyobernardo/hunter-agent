@@ -3,12 +3,20 @@ import os
 from datetime import datetime
 from contextlib import contextmanager
 
-DB_PATH = os.getenv("DB_PATH", "hunter.db")
+def _db_path() -> str:
+    path = os.getenv("DB_PATH", "hunter.db")
+    # Ensure the parent directory exists so SQLite can create the file.
+    # This prevents a crash on Railway when DB_PATH points to a dir
+    # (e.g. /data/hunter.db) that hasn't been mounted yet.
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    return path
 
 
 @contextmanager
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(_db_path())
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     try:
