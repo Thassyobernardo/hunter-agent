@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hunter Agent — Lead Dashboard</title>
+  <style>
+    /* ── Reset & Base ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #161923;
+      --surface2:  #1e2330;
+      --border:    #2a2f3d;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --accent:    #6366f1;
+      --accent-h:  #818cf8;
+      --green:     #22c55e;
+      --yellow:    #eab308;
+      --red:       #ef4444;
+      --blue:      #3b82f6;
+      --purple:    #a855f7;
+      --cyan:      #06b6d4;
+      --radius:    10px;
+      --shadow:    0 4px 24px rgba(0,0,0,.4);
+    }
+
+    html { font-size: 15px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent-h); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text { font-weight: 700; font-size: 1.05rem; letter-spacing: -.3px; }
+    .logo-sub  { font-size: .7rem; color: var(--muted); }
+
+    .nav { padding: 16px 0; flex: 1; }
+    .nav-label {
+      font-size: .65rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 8px 20px 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      border-radius: 0;
+      font-size: .9rem;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active {
+      background: rgba(99,102,241,.12);
+      border-left-color: var(--accent);
+      color: var(--accent-h);
+    }
+    .nav-item .badge {
+      margin-left: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .7rem;
+      padding: 1px 7px;
+      border-radius: 20px;
+    }
+    .nav-item.active .badge { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      font-size: .75rem;
+      color: var(--muted);
+    }
+    .sidebar-footer .kw-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .sidebar-footer .kw-tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: .65rem;
+      color: var(--muted);
+    }
+
+    /* ── Main ────────────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* ── Topbar ──────────────────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar h1 { font-size: 1.1rem; font-weight: 600; flex: 1; }
+
+    .search-wrap { position: relative; }
+    .search-wrap input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 7px 12px 7px 34px;
+      font-size: .85rem;
+      width: 220px;
+      outline: none;
+      transition: border .15s;
+    }
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap .icon {
+      position: absolute; left: 10px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted); font-size: .85rem;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 500;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover { background: var(--surface2); }
+    .btn-sm { padding: 5px 10px; font-size: .78rem; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Stats cards ─────────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px;
+      padding: 24px 28px 0;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .stat-card .label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .stat-card .value { font-size: 1.8rem; font-weight: 700; line-height: 1.2; margin-top: 4px; }
+    .stat-card .sub   { font-size: .72rem; color: var(--muted); margin-top: 4px; }
+    .stat-card.accent .value { color: var(--accent-h); }
+    .stat-card.green  .value { color: var(--green); }
+    .stat-card.yellow .value { color: var(--yellow); }
+    .stat-card.red    .value { color: var(--red); }
+
+    /* ── Filters bar ─────────────────────────────────────────────── */
+    .filters {
+      display: flex; align-items: center; gap: 8px;
+      padding: 18px 28px 12px;
+      flex-wrap: wrap;
+    }
+    .filter-label { font-size: .8rem; color: var(--muted); margin-right: 4px; }
+    .filter-chip {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: .78rem;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .filter-chip:hover, .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .filter-chip.source-upwork.active   { background: #14a800; border-color: #14a800; }
+    .filter-chip.source-reddit.active   { background: #ff4500; border-color: #ff4500; }
+    .filter-chip.source-twitter.active  { background: #1d9bf0; border-color: #1d9bf0; }
+    .filter-chip.source-linkedin.active { background: #0a66c2; border-color: #0a66c2; }
+
+    /* ── Leads table ─────────────────────────────────────────────── */
+    .leads-wrap { padding: 0 28px 40px; flex: 1; }
+
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--surface2);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+      cursor: pointer;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 12px 14px; font-size: .85rem; vertical-align: middle; }
+
+    .source-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .source-upwork   { background: rgba(20,168,0,.15);  color: #4ade80; }
+    .source-reddit   { background: rgba(255,69,0,.15);  color: #fb923c; }
+    .source-twitter  { background: rgba(29,155,240,.15); color: #60a5fa; }
+    .source-linkedin { background: rgba(10,102,194,.15); color: #818cf8; }
+
+    .status-badge {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      text-transform: capitalize;
+    }
+    .status-new     { background: rgba(99,102,241,.2);  color: var(--accent-h); }
+    .status-sent    { background: rgba(59,130,246,.2);  color: #60a5fa; }
+    .status-won     { background: rgba(34,197,94,.2);   color: var(--green); }
+    .status-skipped { background: rgba(100,116,139,.15); color: var(--muted); }
+
+    .title-cell { max-width: 320px; }
+    .title-cell .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .title-cell .meta  { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+
+    .urgency-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+    }
+    .urgency-high   { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .urgency-medium { background: var(--yellow); }
+    .urgency-low    { background: var(--green); }
+    .urgency-unknown { background: var(--muted); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: .9rem; }
+
+    /* ── Modal ───────────────────────────────────────────────────── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 100;
+      backdrop-filter: blur(4px);
+    }
+    .modal-backdrop.open { display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 780px;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+      animation: slideUp .2s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: var(--surface);
+    }
+    .modal-header .title-block { flex: 1; min-width: 0; }
+    .modal-header h2 { font-size: 1rem; font-weight: 600; line-height: 1.4; }
+    .modal-header .meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .modal-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 1.2rem; cursor: pointer; flex-shrink: 0; padding: 2px;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body { padding: 20px 24px; }
+
+    .section { margin-bottom: 22px; }
+    .section-title {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .desc-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: .83rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      max-height: 180px;
+      overflow-y: auto;
+      line-height: 1.7;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .analysis-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .analysis-item .ai-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .analysis-item .ai-value { font-size: .83rem; }
+    .analysis-item.full { grid-column: 1 / -1; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: .72rem;
+      color: var(--text);
+    }
+
+    .proposal-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .proposal-row {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .proposal-row:last-child { border-bottom: none; }
+    .proposal-row .p-label {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .proposal-row .p-value { font-size: .87rem; line-height: 1.65; }
+
+    .copy-btn-wrap { position: relative; }
+    .copy-all-btn {
+      position: absolute; right: 0; top: -32px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .status-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .status-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: .78rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .status-btn:hover { border-color: var(--accent); color: var(--accent-h); }
+    .status-btn.active-status { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .status-btn[data-s="sent"]:hover    { border-color: var(--blue);   color: #60a5fa; }
+    .status-btn[data-s="won"]:hover     { border-color: var(--green);  color: var(--green); }
+    .status-btn[data-s="skipped"]:hover { border-color: var(--muted);  color: var(--muted); }
+
+    /* ── Toast ───────────────────────────────────────────────────── */
+    .toast-container {
+      position: fixed; bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 200;
+    }
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: .83rem;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: var(--shadow);
+      animation: fadeInRight .25s ease;
+    }
+    @keyframes fadeInRight {
+      from { transform: translateX(20px); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+    .toast.success { border-color: var(--green); }
+    .toast.error   { border-color: var(--red);   }
+
+    /* ── Scan spinner ────────────────────────────────────────────── */
+    .spin { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Scrollbar ───────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .analysis-grid { grid-template-columns: 1fr; }
+      .modal { margin: 0; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ───────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🎯</div>
+      <div>
+        <div class="logo-text">Hunter Agent</div>
+        <div class="logo-sub">Lead Intelligence</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Filter by status</div>
+      <div class="nav-item active" data-filter-status="" onclick="setStatusFilter(this, '')">
+        All Leads <span class="badge" id="badge-all">{{ stats.total }}</span>
+      </div>
+      <div class="nav-item" data-filter-status="new" onclick="setStatusFilter(this, 'new')">
+        New <span class="badge" id="badge-new">{{ stats.by_status.get('new', 0) }}</span>
+      </div>
+      <div class="nav-item" data-filter-status="sent" onclick="setStatusFilter(this, 'sent')">
+        Sent <span class="badge" id="badge-sent">{{ stats.by_status.get('sent', 0) }}</span>
+      </div>
+      <div class="nav-item" data-filter-status="won" onclick="setStatusFilter(this, 'won')">
+        Won <span class="badge" id="badge-won">{{ stats.by_status.get('won', 0) }}</span>
+      </div>
+      <div class="nav-item" data-filter-status="skipped" onclick="setStatusFilter(this, 'skipped')">
+        Skipped <span class="badge" id="badge-skipped">{{ stats.by_status.get('skipped', 0) }}</span>
+      </div>
+
+      <div class="nav-label" style="margin-top:16px;">Sources</div>
+      {% for source, cnt in stats.by_source.items() %}
+      <div class="nav-item" data-filter-source="{{ source }}" onclick="setSourceFilter(this, '{{ source }}')">
+        {{ source|capitalize }} <span class="badge">{{ cnt }}</span>
+      </div>
+      {% endfor %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <div>Keywords tracked:</div>
+      <div class="kw-tags">
+        {% for kw in keywords %}
+        <span class="kw-tag">{{ kw }}</span>
+        {% endfor %}
+      </div>
+      <div style="margin-top:10px;">Scan every {{ scan_interval }}h</div>
+    </div>
+  </aside>
+
+  <!-- ── Main ──────────────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <h1>Lead Dashboard</h1>
+      <div class="search-wrap">
+        <span class="icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search leads…" oninput="filterTable()">
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="refreshLeads()">↻ Refresh</button>
+      <button class="btn btn-primary btn-sm" id="scanBtn" onclick="triggerScan()">
+        ⚡ Scan Now
+      </button>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card accent">
+        <div class="label">Total Leads</div>
+        <div class="value" id="stat-total">{{ stats.total }}</div>
+        <div class="sub">all time</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Won</div>
+        <div class="value" id="stat-won">{{ stats.by_status.get('won', 0) }}</div>
+        <div class="sub">converted</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="label">Sent</div>
+        <div class="value" id="stat-sent">{{ stats.by_status.get('sent', 0) }}</div>
+        <div class="sub">proposals out</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Last 24h</div>
+        <div class="value" id="stat-24h">{{ stats.recent_24h }}</div>
+        <div class="sub">new leads</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Pending</div>
+        <div class="value" id="stat-new">{{ stats.by_status.get('new', 0) }}</div>
+        <div class="sub">to review</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters" style="padding-top:20px;">
+      <span class="filter-label">Source:</span>
+      <span class="filter-chip source-all active" onclick="setSourceChip(this, '')">All</span>
+      <span class="filter-chip source-upwork"   onclick="setSourceChip(this, 'upwork')">Upwork</span>
+      <span class="filter-chip source-reddit"   onclick="setSourceChip(this, 'reddit')">Reddit</span>
+      <span class="filter-chip source-twitter"  onclick="setSourceChip(this, 'twitter')">Twitter/X</span>
+      <span class="filter-chip source-linkedin" onclick="setSourceChip(this, 'linkedin')">LinkedIn</span>
+    </div>
+
+    <!-- Table -->
+    <div class="leads-wrap">
+      <div class="table-wrap">
+        <table id="leadsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Source</th>
+              <th>Lead</th>
+              <th>Urgency</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="leadsBody">
+            {% for lead in leads %}
+            {% set analysis = {} %}
+            {% if lead.analysis %}
+              {% set analysis = lead.analysis | fromjson %}
+            {% endif %}
+            <tr data-id="{{ lead.id }}"
+                data-source="{{ lead.source }}"
+                data-status="{{ lead.status }}"
+                data-title="{{ lead.title | lower }}"
+                onclick="openModal({{ lead.id }})">
+              <td style="color:var(--muted);font-size:.78rem;">{{ lead.id }}</td>
+              <td>
+                <span class="source-badge source-{{ lead.source }}">{{ lead.source }}</span>
+              </td>
+              <td class="title-cell">
+                <div class="title">{{ lead.title }}</div>
+                <div class="meta">
+                  {% if lead.author %}by {{ lead.author }} · {% endif %}
+                  {% if lead.keywords %}{{ lead.keywords }}{% endif %}
+                </div>
+              </td>
+              <td>
+                {% if analysis %}
+                  {% set u = analysis.get('urgency', 'unknown') %}
+                  <span class="urgency-dot urgency-{{ u }}" title="{{ u }}"></span>
+                  <span style="font-size:.75rem;color:var(--muted);margin-left:4px;">{{ u }}</span>
+                {% else %}
+                  <span style="color:var(--muted);font-size:.78rem;">—</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="status-badge status-{{ lead.status }}">{{ lead.status }}</span>
+              </td>
+              <td style="color:var(--muted);font-size:.78rem;white-space:nowrap;">
+                {{ lead.created_at[:10] }}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <div class="icon">🔭</div>
+                  <p>No leads yet. Click <strong>Scan Now</strong> to start hunting.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /.main -->
+</div><!-- /.layout -->
+
+<!-- ── Modal ─────────────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="title-block">
+        <h2 id="modalTitle">Loading…</h2>
+        <div class="meta-row" id="modalMeta"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <p style="color:var(--muted);text-align:center;padding:40px 0;">Loading lead details…</p>
+    </div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- ── Toast container ────────────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────
+let currentStatusFilter = '';
+let currentSourceFilter = '';
+let currentLeadId = null;
+
+// ── Filter table ──────────────────────────────────────────────────
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const rows = document.querySelectorAll('#leadsBody tr[data-id]');
+  rows.forEach(row => {
+    const title  = row.dataset.title || '';
+    const source = row.dataset.source || '';
+    const status = row.dataset.status || '';
+    const matchQ = !q || title.includes(q);
+    const matchStatus = !currentStatusFilter || status === currentStatusFilter;
+    const matchSource = !currentSourceFilter || source === currentSourceFilter;
+    row.style.display = (matchQ && matchStatus && matchSource) ? '' : 'none';
+  });
+}
+
+function setStatusFilter(el, status) {
+  currentStatusFilter = status;
+  document.querySelectorAll('.nav-item[data-filter-status]').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  filterTable();
+}
+
+function setSourceFilter(el, source) {
+  currentSourceFilter = source;
+  document.querySelectorAll('.nav-item[data-filter-source]').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  // Also sync chips
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  const chip = document.querySelector(`.filter-chip.source-${source || 'all'}`);
+  if (chip) chip.classList.add('active');
+  filterTable();
+}
+
+function setSourceChip(el, source) {
+  currentSourceFilter = source;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  // sync sidebar
+  document.querySelectorAll('.nav-item[data-filter-source]').forEach(n => n.classList.remove('active'));
+  if (source) {
+    const nav = document.querySelector(`.nav-item[data-filter-source="${source}"]`);
+    if (nav) nav.classList.add('active');
+  }
+  filterTable();
+}
+
+// ── Proposal text builder ─────────────────────────────────────────
+function buildProposalText(p) {
+  if (!p || p.error) return 'Proposal not available.';
+  return [
+    p.hook        ? `HOOK:\n${p.hook}` : '',
+    p.solution    ? `\nSOLUTION:\n${p.solution}` : '',
+    p.tech_stack  ? `\nTECH STACK: ${p.tech_stack}` : '',
+    p.timeline    ? `TIMELINE: ${p.timeline}` : '',
+    p.closing_question ? `\n${p.closing_question}` : '',
+    p.upsell      ? `\nUPSELL: ${p.upsell}` : '',
+  ].filter(Boolean).join('\n');
+}
+
+// ── Modal ─────────────────────────────────────────────────────────
+async function openModal(id) {
+  currentLeadId = id;
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.getElementById('modalTitle').textContent = 'Loading…';
+  document.getElementById('modalMeta').innerHTML = '';
+  document.getElementById('modalBody').innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px 0;">⏳ Fetching lead…</p>';
+  document.getElementById('modalFooter').innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/leads/${id}`);
+    const lead = await res.json();
+    renderModal(lead);
+  } catch (e) {
+    document.getElementById('modalBody').innerHTML = `<p style="color:var(--red);">Error: ${e.message}</p>`;
+  }
+}
+
+function renderModal(lead) {
+  const analysis = lead.analysis || {};
+  const proposal = lead.proposal || {};
+
+  document.getElementById('modalTitle').textContent = lead.title;
+  document.getElementById('modalMeta').innerHTML = `
+    <span class="source-badge source-${lead.source}">${lead.source}</span>
+    <span class="status-badge status-${lead.status}">${lead.status}</span>
+    ${lead.author ? `<span style="font-size:.75rem;color:var(--muted);">by ${lead.author}</span>` : ''}
+    ${lead.posted_at ? `<span style="font-size:.75rem;color:var(--muted);">${lead.posted_at.slice(0,10)}</span>` : ''}
+    <a href="${lead.url}" target="_blank" style="font-size:.75rem;">↗ View original</a>
+  `;
+
+  let painPoints = '';
+  if (analysis.pain_points?.length) {
+    painPoints = `<div class="tags">${analysis.pain_points.map(p => `<span class="tag">⚡ ${p}</span>`).join('')}</div>`;
+  }
+  let techHints = '';
+  if (analysis.tech_hints?.length) {
+    techHints = `<div class="tags" style="margin-top:6px;">${analysis.tech_hints.map(t => `<span class="tag" style="color:var(--cyan);">⚙ ${t}</span>`).join('')}</div>`;
+  }
+
+  const urgencyClass = `urgency-${analysis.urgency || 'unknown'}`;
+  const proposalText = buildProposalText(proposal);
+
+  document.getElementById('modalBody').innerHTML = `
+
+    <div class="section">
+      <div class="section-title">Description</div>
+      <div class="desc-box">${escHtml(lead.description || 'No description.')}</div>
+    </div>
+
+    ${analysis && !analysis.error ? `
+    <div class="section">
+      <div class="section-title">AI Analysis</div>
+      <div class="analysis-grid">
+        <div class="analysis-item">
+          <div class="ai-label">Project type</div>
+          <div class="ai-value">${escHtml(analysis.project_type || '—')}</div>
+        </div>
+        <div class="analysis-item">
+          <div class="ai-label">Urgency · Budget</div>
+          <div class="ai-value">
+            <span class="urgency-dot ${urgencyClass}"></span>
+            ${analysis.urgency || '?'} &nbsp;·&nbsp; 💰 ${analysis.budget_signal || '?'}
+          </div>
+        </div>
+        <div class="analysis-item">
+          <div class="ai-label">Complexity</div>
+          <div class="ai-value">${analysis.estimated_complexity || '—'}</div>
+        </div>
+        <div class="analysis-item">
+          <div class="ai-label">Ideal solution</div>
+          <div class="ai-value">${escHtml(analysis.ideal_solution || '—')}</div>
+        </div>
+        ${painPoints || techHints ? `
+        <div class="analysis-item full">
+          <div class="ai-label">Pain points & Tech</div>
+          ${painPoints}${techHints}
+        </div>
+        ` : ''}
+      </div>
+    </div>
+    ` : ''}
+
+    ${proposal && !proposal.error ? `
+    <div class="section">
+      <div class="section-title">Generated Proposal</div>
+      <div class="copy-btn-wrap">
+        <button class="btn btn-ghost btn-sm copy-all-btn" onclick="copyAll('${currentLeadId}')">📋 Copy full proposal</button>
+      </div>
+      <div class="proposal-card" id="proposalCard">
+        ${proposal.hook ? `
+        <div class="proposal-row">
+          <div class="p-label">🎣 Hook</div>
+          <div class="p-value">${escHtml(proposal.hook)}</div>
+        </div>` : ''}
+        ${proposal.solution ? `
+        <div class="proposal-row">
+          <div class="p-label">🛠 Solution</div>
+          <div class="p-value">${escHtml(proposal.solution)}</div>
+        </div>` : ''}
+        ${proposal.tech_stack ? `
+        <div class="proposal-row">
+          <div class="p-label">⚙ Tech Stack</div>
+          <div class="p-value"><div class="tags">${proposal.tech_stack.split(',').map(t => `<span class="tag">${escHtml(t.trim())}</span>`).join('')}</div></div>
+        </div>` : ''}
+        ${proposal.timeline ? `
+        <div class="proposal-row">
+          <div class="p-label">📅 Timeline</div>
+          <div class="p-value">${escHtml(proposal.timeline)}</div>
+        </div>` : ''}
+        ${proposal.closing_question ? `
+        <div class="proposal-row">
+          <div class="p-label">❓ Closing Question</div>
+          <div class="p-value" style="color:var(--accent-h);font-style:italic;">${escHtml(proposal.closing_question)}</div>
+        </div>` : ''}
+        ${proposal.upsell ? `
+        <div class="proposal-row">
+          <div class="p-label">📈 Upsell</div>
+          <div class="p-value" style="color:var(--green);">${escHtml(proposal.upsell)}</div>
+        </div>` : ''}
+      </div>
+    </div>
+    ` : `<div class="section"><p style="color:var(--muted);">No proposal generated yet.</p></div>`}
+
+  `;
+
+  // Footer
+  const statuses = ['new', 'sent', 'won', 'skipped'];
+  const statusLabels = { new: '🔵 New', sent: '✉️ Sent', won: '🏆 Won', skipped: '⏭ Skip' };
+  const statusBtns = statuses.map(s => `
+    <button class="status-btn ${lead.status === s ? 'active-status' : ''}"
+            data-s="${s}" id="sbtn-${s}"
+            onclick="setStatus(${lead.id}, '${s}')">
+      ${statusLabels[s]}
+    </button>
+  `).join('');
+
+  document.getElementById('modalFooter').innerHTML = `
+    <div class="status-actions">${statusBtns}</div>
+    <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="copyAll(${lead.id})">📋 Copy Proposal</button>
+  `;
+
+  // Store proposal text for copy
+  window.__currentProposal = proposalText;
+  window.__currentLead = lead;
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modalBackdrop')) return;
+  document.getElementById('modalBackdrop').classList.remove('open');
+  currentLeadId = null;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── Copy proposal ─────────────────────────────────────────────────
+async function copyAll(id) {
+  const text = window.__currentProposal || '';
+  if (!text) { toast('No proposal to copy', 'error'); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Proposal copied to clipboard!', 'success');
+  } catch {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('Proposal copied!', 'success');
+  }
+}
+
+// ── Update status ─────────────────────────────────────────────────
+async function setStatus(id, status) {
+  try {
+    const res = await fetch(`/api/leads/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      toast(`Status → ${status}`, 'success');
+      // Update badges
+      document.querySelectorAll(`[data-s]`).forEach(b => b.classList.remove('active-status'));
+      const btn = document.getElementById(`sbtn-${status}`);
+      if (btn) btn.classList.add('active-status');
+      // Update row in table
+      const row = document.querySelector(`tr[data-id="${id}"]`);
+      if (row) {
+        row.dataset.status = status;
+        const badge = row.querySelector('.status-badge');
+        if (badge) {
+          badge.className = `status-badge status-${status}`;
+          badge.textContent = status;
+        }
+      }
+      // Update modal meta badge
+      const metaBadge = document.querySelector('#modalMeta .status-badge');
+      if (metaBadge) {
+        metaBadge.className = `status-badge status-${status}`;
+        metaBadge.textContent = status;
+      }
+      refreshStats();
+    }
+  } catch (e) {
+    toast(`Error: ${e.message}`, 'error');
+  }
+}
+
+// ── Scan ──────────────────────────────────────────────────────────
+async function triggerScan() {
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⚡</span> Scanning…';
+  try {
+    const res = await fetch('/api/scan', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      toast(`Scan complete — ${data.new_leads} new leads found`, 'success');
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      toast(`Scan error: ${data.error}`, 'error');
+    }
+  } catch (e) {
+    toast(`Error: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⚡ Scan Now';
+  }
+}
+
+// ── Refresh ───────────────────────────────────────────────────────
+function refreshLeads() { location.reload(); }
+
+async function refreshStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const s = await res.json();
+    document.getElementById('stat-total').textContent = s.total;
+    document.getElementById('stat-won').textContent   = s.by_status?.won    || 0;
+    document.getElementById('stat-sent').textContent  = s.by_status?.sent   || 0;
+    document.getElementById('stat-24h').textContent   = s.recent_24h;
+    document.getElementById('stat-new').textContent   = s.by_status?.new    || 0;
+    document.getElementById('badge-all').textContent  = s.total;
+    document.getElementById('badge-new').textContent  = s.by_status?.new    || 0;
+    document.getElementById('badge-sent').textContent = s.by_status?.sent   || 0;
+    document.getElementById('badge-won').textContent  = s.by_status?.won    || 0;
+    document.getElementById('badge-skipped').textContent = s.by_status?.skipped || 0;
+  } catch {}
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> ${escHtml(msg)}`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+
+</body>
+</html>
