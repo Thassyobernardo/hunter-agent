@@ -1,8 +1,11 @@
 import os
 import json
-from groq import Groq
+import logging
+from groq import Groq, BadRequestError, APIStatusError, APIConnectionError
 
-MODEL = "llama3-70b-8192"
+log = logging.getLogger(__name__)
+
+MODEL = "llama-3.3-70b-versatile"
 _client = None
 
 
@@ -78,7 +81,22 @@ def analyze_lead(source: str, title: str, description: str) -> dict:
         )
         raw = resp.choices[0].message.content.strip()
         return json.loads(raw)
+    except BadRequestError as e:
+        log.error("Groq 400 BadRequest in analyze_lead — status=%s message=%r body=%s",
+                  e.status_code, e.message, e.body)
+        return {"error": f"Groq 400: {e.message}", "pain_points": [], "urgency": "unknown"}
+    except APIStatusError as e:
+        log.error("Groq API error in analyze_lead — status=%s message=%r body=%s",
+                  e.status_code, e.message, e.body)
+        return {"error": f"Groq {e.status_code}: {e.message}", "pain_points": [], "urgency": "unknown"}
+    except APIConnectionError as e:
+        log.error("Groq connection error in analyze_lead: %s", e)
+        return {"error": f"Groq connection error: {e}", "pain_points": [], "urgency": "unknown"}
+    except json.JSONDecodeError as e:
+        log.error("Groq returned non-JSON in analyze_lead: %s", e)
+        return {"error": "Groq response was not valid JSON", "pain_points": [], "urgency": "unknown"}
     except Exception as e:
+        log.error("Unexpected error in analyze_lead: %s", e, exc_info=True)
         return {"error": str(e), "pain_points": [], "urgency": "unknown"}
 
 
@@ -101,7 +119,22 @@ def generate_proposal(source: str, title: str, description: str,
         )
         raw = resp.choices[0].message.content.strip()
         return json.loads(raw)
+    except BadRequestError as e:
+        log.error("Groq 400 BadRequest in generate_proposal — status=%s message=%r body=%s",
+                  e.status_code, e.message, e.body)
+        return {"error": f"Groq 400: {e.message}", "hook": "Could not generate proposal."}
+    except APIStatusError as e:
+        log.error("Groq API error in generate_proposal — status=%s message=%r body=%s",
+                  e.status_code, e.message, e.body)
+        return {"error": f"Groq {e.status_code}: {e.message}", "hook": "Could not generate proposal."}
+    except APIConnectionError as e:
+        log.error("Groq connection error in generate_proposal: %s", e)
+        return {"error": f"Groq connection error: {e}", "hook": "Could not generate proposal."}
+    except json.JSONDecodeError as e:
+        log.error("Groq returned non-JSON in generate_proposal: %s", e)
+        return {"error": "Groq response was not valid JSON", "hook": "Could not generate proposal."}
     except Exception as e:
+        log.error("Unexpected error in generate_proposal: %s", e, exc_info=True)
         return {"error": str(e), "hook": "Could not generate proposal."}
 
 
