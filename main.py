@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request, abort, send_file
+from werkzeug.exceptions import HTTPException
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -31,7 +32,19 @@ app.secret_key = os.getenv("SECRET_KEY", "hunter-agent-secret")
 def ensure_db():
     if request.path == "/health":
         return
-    db.init_db()
+    try:
+        db.init_db()
+    except Exception as e:
+        log.error(f"Database unavailable: {e}")
+        return jsonify({"error": "Database unavailable", "detail": str(e)}), 503
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if isinstance(e, HTTPException):
+        return jsonify({"error": e.description}), e.code
+    log.error("Unhandled exception", exc_info=True)
+    return jsonify({"error": "Internal server error", "detail": str(e)}), 500
 
 # Jinja2 filter: parse JSON strings in templates
 @app.template_filter("fromjson")
@@ -111,8 +124,12 @@ def run_scan():
 
 @app.route("/")
 def dashboard():
-    stats = db.get_stats()
-    leads = db.get_leads(limit=50)
+    try:
+        stats = db.get_stats()
+        leads = db.get_leads(limit=50)
+    except Exception as e:
+        log.error(f"Dashboard DB error: {e}")
+        return jsonify({"error": "Database error", "detail": str(e)}), 500
     return render_template(
         "dashboard.html",
         stats=stats,
@@ -124,17 +141,25 @@ def dashboard():
 
 @app.route("/api/leads")
 def api_leads():
-    status = request.args.get("status")
-    source = request.args.get("source")
-    limit = min(int(request.args.get("limit", 100)), 500)
-    offset = int(request.args.get("offset", 0))
-    leads = db.get_leads(status=status, source=source, limit=limit, offset=offset)
-    return jsonify(leads)
+    try:
+        status = request.args.get("status")
+        source = request.args.get("source")
+        limit = min(int(request.args.get("limit", 100)), 500)
+        offset = int(request.args.get("offset", 0))
+        leads = db.get_leads(status=status, source=source, limit=limit, offset=offset)
+        return jsonify(leads)
+    except Exception as e:
+        log.error(f"api_leads error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/leads/<int:lead_id>")
 def api_lead(lead_id):
-    lead = db.get_lead(lead_id)
+    try:
+        lead = db.get_lead(lead_id)
+    except Exception as e:
+        log.error(f"api_lead DB error: {e}")
+        return jsonify({"error": str(e)}), 500
     if not lead:
         abort(404)
 
@@ -164,7 +189,11 @@ def api_update_status(lead_id):
 
 @app.route("/api/stats")
 def api_stats():
-    return jsonify(db.get_stats())
+    try:
+        return jsonify(db.get_stats())
+    except Exception as e:
+        log.error(f"api_stats error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/scan", methods=["POST"])
@@ -220,7 +249,11 @@ def api_build_lead(lead_id):
 @app.route("/api/leads/<int:lead_id>/download")
 def api_download_lead(lead_id):
     """Download the ZIP deliverable for a built lead."""
-    lead = db.get_lead(lead_id)
+    try:
+        lead = db.get_lead(lead_id)
+    except Exception as e:
+        log.error(f"api_download_lead DB error: {e}")
+        return jsonify({"error": str(e)}), 500
     if not lead:
         abort(404)
     path = lead.get("deliverable_path")
@@ -255,6 +288,14 @@ def start_scheduler():
     log.info(f"Scheduler started — scanning every {interval_hours}h")
     return scheduler
 
+
+# Attempt DB init at startup so tables exist before the first request.
+# If the DB isn't reachable yet, before_request will retry on each request.
+try:
+    db.init_db()
+    log.info("Database initialised at startup")
+except Exception as e:
+    log.warning(f"Database not reachable at startup (will retry): {e}")
 
 # Start the scheduler; the first scan fires after SCAN_INTERVAL_HOURS.
 _scheduler = start_scheduler()
