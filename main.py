@@ -1,8 +1,6 @@
 import os
 import json
-import time
 import logging
-import threading
 from dotenv import load_dotenv
 load_dotenv()
 from datetime import datetime
@@ -26,6 +24,14 @@ log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "hunter-agent-secret")
+
+# Initialise the DB schema on the first non-health request so Flask can
+# bind and respond to /health immediately without waiting for PostgreSQL.
+@app.before_request
+def ensure_db():
+    if request.path == "/health":
+        return
+    db.init_db()
 
 # Jinja2 filter: parse JSON strings in templates
 @app.template_filter("fromjson")
@@ -250,21 +256,8 @@ def start_scheduler():
     return scheduler
 
 
-# Always init DB and start scheduler (works with both gunicorn and direct run)
-db.init_db()
+# Start the scheduler; the first scan fires after SCAN_INTERVAL_HOURS.
 _scheduler = start_scheduler()
-
-# Fire the first scan in a background thread after a short delay so Flask
-# can start and pass the Railway healthcheck before heavy work begins.
-def _first_scan_delayed(delay: int = 15):
-    time.sleep(delay)
-    log.info("Running initial scan (delayed start)")
-    try:
-        run_scan()
-    except Exception as e:
-        log.error(f"Initial scan error: {e}")
-
-threading.Thread(target=_first_scan_delayed, daemon=True).start()
 
 
 if __name__ == "__main__":

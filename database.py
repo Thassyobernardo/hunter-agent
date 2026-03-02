@@ -4,6 +4,8 @@ import psycopg2.extras
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 
+_initialized = False
+
 
 def _get_dsn() -> str:
     url = os.getenv("DATABASE_URL")
@@ -33,6 +35,9 @@ def get_conn():
 
 
 def init_db():
+    global _initialized
+    if _initialized:
+        return
     with get_conn() as conn:
         cur = conn.cursor()
 
@@ -74,6 +79,7 @@ def init_db():
             cur.execute(
                 f"ALTER TABLE leads ADD COLUMN IF NOT EXISTS {col} {definition}"
             )
+    _initialized = True
 
 
 def upsert_lead(source: str, title: str, description: str,
