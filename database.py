@@ -4,14 +4,21 @@ from datetime import datetime
 from contextlib import contextmanager
 
 def _db_path() -> str:
-    path = os.getenv("DB_PATH", "hunter.db")
-    # Ensure the parent directory exists so SQLite can create the file.
-    # This prevents a crash on Railway when DB_PATH points to a dir
-    # (e.g. /data/hunter.db) that hasn't been mounted yet.
-    parent = os.path.dirname(path)
-    if parent:
-        os.makedirs(parent, exist_ok=True)
-    return path
+    # 1. Explicit DB_PATH env var always wins.
+    explicit = os.getenv("DB_PATH")
+    if explicit:
+        parent = os.path.dirname(explicit)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        return explicit
+
+    # 2. Auto-detect a Railway (or Docker) persistent volume mounted at /data.
+    #    If the directory exists and is writable the data survives redeploys.
+    if os.path.isdir("/data") and os.access("/data", os.W_OK):
+        return "/data/hunter.db"
+
+    # 3. Local fallback — working directory.
+    return "hunter.db"
 
 
 @contextmanager
