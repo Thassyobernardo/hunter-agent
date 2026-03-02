@@ -9,6 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 import database as db
+import qualifier
 from scrapers import upwork_scraper, google_scraper, twitter_scraper, linkedin_scraper
 
 logging.basicConfig(
@@ -112,7 +113,7 @@ def api_lead(lead_id):
         abort(404)
 
     # Parse JSON fields for nicer output
-    for field in ("analysis", "proposal"):
+    for field in ("analysis", "proposal", "qualification"):
         if lead.get(field):
             try:
                 lead[field] = json.loads(lead[field])
@@ -149,6 +150,31 @@ def api_scan():
         return jsonify({"ok": True, "new_leads": total})
     except Exception as e:
         log.error(f"Manual scan failed: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/qualify", methods=["POST"])
+def api_qualify():
+    """Qualify all leads with status 'new'."""
+    log.info("Bulk qualification triggered via API")
+    try:
+        count = qualifier.run_qualification()
+        return jsonify({"ok": True, "qualified": count})
+    except Exception as e:
+        log.error(f"Bulk qualification failed: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/leads/<int:lead_id>/qualify", methods=["POST"])
+def api_qualify_lead(lead_id):
+    """Qualify a single lead by ID."""
+    try:
+        result = qualifier.qualify_single(lead_id)
+        return jsonify({"ok": True, "qualification": result})
+    except ValueError as e:
+        abort(404, str(e))
+    except Exception as e:
+        log.error(f"Qualification failed for lead {lead_id}: {e}")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 

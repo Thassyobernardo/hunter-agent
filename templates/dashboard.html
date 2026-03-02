@@ -290,10 +290,12 @@
       border-radius: 20px;
       text-transform: capitalize;
     }
-    .status-new     { background: rgba(99,102,241,.2);  color: var(--accent-h); }
-    .status-sent    { background: rgba(59,130,246,.2);  color: #60a5fa; }
-    .status-won     { background: rgba(34,197,94,.2);   color: var(--green); }
-    .status-skipped { background: rgba(100,116,139,.15); color: var(--muted); }
+    .status-new       { background: rgba(99,102,241,.2);   color: var(--accent-h); }
+    .status-sent      { background: rgba(59,130,246,.2);   color: #60a5fa; }
+    .status-won       { background: rgba(34,197,94,.2);    color: var(--green); }
+    .status-skipped   { background: rgba(100,116,139,.15); color: var(--muted); }
+    .status-qualified { background: rgba(34,197,94,.2);    color: var(--green); }
+    .status-skip      { background: rgba(239,68,68,.15);   color: #fca5a5; }
 
     .title-cell { max-width: 320px; }
     .title-cell .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -495,6 +497,87 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Modal tabs ──────────────────────────────────────────────── */
+    .modal-tabs {
+      display: flex;
+      margin: -20px -24px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+      padding: 0 24px;
+      overflow-x: auto;
+    }
+    .modal-tab {
+      padding: 10px 16px;
+      font-size: .82rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .modal-tab:hover { color: var(--text); }
+    .modal-tab.active { color: var(--accent-h); border-bottom-color: var(--accent); }
+
+    .tab-panel { display: none; padding-top: 20px; }
+    .tab-panel.active { display: block; }
+
+    /* ── Qualify card ────────────────────────────────────────────── */
+    .qualify-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .qualify-row {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 16px;
+    }
+    .qualify-row:last-child { border-bottom: none; }
+    .qualify-row .q-label {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      min-width: 120px;
+      padding-top: 3px;
+      flex-shrink: 0;
+    }
+    .qualify-row .q-value { font-size: .87rem; line-height: 1.65; flex: 1; }
+
+    .price-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .price-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .price-item .p-sub  { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .price-item .p-amt  { font-size: 1.3rem; font-weight: 700; color: var(--green); margin-top: 2px; }
+    .price-item .p-note { font-size: .7rem; color: var(--muted); }
+
+    .confidence-bar-wrap { display: flex; align-items: center; gap: 10px; }
+    .confidence-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .confidence-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+    .conf-high   { background: var(--green); }
+    .conf-medium { background: var(--yellow); }
+    .conf-low    { background: var(--red); }
 
     /* ── Responsive ──────────────────────────────────────────────── */
     @media (max-width: 768px) {
@@ -784,115 +867,184 @@ async function openModal(id) {
   }
 }
 
+// ── Tab switching ──────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const tab = document.querySelector(`.modal-tab[data-tab="${name}"]`);
+  if (tab) tab.classList.add('active');
+  const panel = document.getElementById(`tab-${name}`);
+  if (panel) panel.classList.add('active');
+}
+
 function renderModal(lead) {
   const analysis = lead.analysis || {};
   const proposal = lead.proposal || {};
+  const qual     = lead.qualification || {};
 
   document.getElementById('modalTitle').textContent = lead.title;
   document.getElementById('modalMeta').innerHTML = `
-    <span class="source-badge source-${lead.source}">${lead.source}</span>
-    <span class="status-badge status-${lead.status}">${lead.status}</span>
-    ${lead.author ? `<span style="font-size:.75rem;color:var(--muted);">by ${lead.author}</span>` : ''}
+    <span class="source-badge source-${lead.source}">${escHtml(lead.source)}</span>
+    <span class="status-badge status-${lead.status}" id="metaStatusBadge">${escHtml(lead.status)}</span>
+    ${lead.author ? `<span style="font-size:.75rem;color:var(--muted);">by ${escHtml(lead.author)}</span>` : ''}
     ${lead.posted_at ? `<span style="font-size:.75rem;color:var(--muted);">${lead.posted_at.slice(0,10)}</span>` : ''}
     <a href="${lead.url}" target="_blank" style="font-size:.75rem;">↗ View original</a>
   `;
 
+  // ── Analysis tab content ───────────────────────────────────────
   let painPoints = '';
   if (analysis.pain_points?.length) {
-    painPoints = `<div class="tags">${analysis.pain_points.map(p => `<span class="tag">⚡ ${p}</span>`).join('')}</div>`;
+    painPoints = `<div class="tags">${analysis.pain_points.map(p => `<span class="tag">⚡ ${escHtml(p)}</span>`).join('')}</div>`;
   }
   let techHints = '';
   if (analysis.tech_hints?.length) {
-    techHints = `<div class="tags" style="margin-top:6px;">${analysis.tech_hints.map(t => `<span class="tag" style="color:var(--cyan);">⚙ ${t}</span>`).join('')}</div>`;
+    techHints = `<div class="tags" style="margin-top:6px;">${analysis.tech_hints.map(t => `<span class="tag" style="color:var(--cyan);">⚙ ${escHtml(t)}</span>`).join('')}</div>`;
   }
-
   const urgencyClass = `urgency-${analysis.urgency || 'unknown'}`;
-  const proposalText = buildProposalText(proposal);
 
-  document.getElementById('modalBody').innerHTML = `
-
-    <div class="section">
-      <div class="section-title">Description</div>
-      <div class="desc-box">${escHtml(lead.description || 'No description.')}</div>
-    </div>
-
-    ${analysis && !analysis.error ? `
-    <div class="section">
-      <div class="section-title">AI Analysis</div>
-      <div class="analysis-grid">
-        <div class="analysis-item">
-          <div class="ai-label">Project type</div>
-          <div class="ai-value">${escHtml(analysis.project_type || '—')}</div>
+  const analysisHtml = analysis && !analysis.error ? `
+    <div class="analysis-grid">
+      <div class="analysis-item">
+        <div class="ai-label">Project type</div>
+        <div class="ai-value">${escHtml(analysis.project_type || '—')}</div>
+      </div>
+      <div class="analysis-item">
+        <div class="ai-label">Urgency · Budget</div>
+        <div class="ai-value">
+          <span class="urgency-dot ${urgencyClass}"></span>
+          ${escHtml(analysis.urgency || '?')} &nbsp;·&nbsp; 💰 ${escHtml(analysis.budget_signal || '?')}
         </div>
-        <div class="analysis-item">
-          <div class="ai-label">Urgency · Budget</div>
-          <div class="ai-value">
-            <span class="urgency-dot ${urgencyClass}"></span>
-            ${analysis.urgency || '?'} &nbsp;·&nbsp; 💰 ${analysis.budget_signal || '?'}
+      </div>
+      <div class="analysis-item">
+        <div class="ai-label">Complexity</div>
+        <div class="ai-value">${escHtml(analysis.estimated_complexity || '—')}</div>
+      </div>
+      <div class="analysis-item">
+        <div class="ai-label">Ideal solution</div>
+        <div class="ai-value">${escHtml(analysis.ideal_solution || '—')}</div>
+      </div>
+      ${painPoints || techHints ? `
+      <div class="analysis-item full">
+        <div class="ai-label">Pain points & Tech</div>
+        ${painPoints}${techHints}
+      </div>` : ''}
+    </div>
+  ` : `<p style="color:var(--muted);">No analysis generated yet.</p>`;
+
+  // ── Proposal tab content ───────────────────────────────────────
+  const proposalText = buildProposalText(proposal);
+  const proposalHtml = proposal && !proposal.error ? `
+    <div class="copy-btn-wrap">
+      <button class="btn btn-ghost btn-sm copy-all-btn" onclick="copyAll(${lead.id})">📋 Copy full proposal</button>
+    </div>
+    <div class="proposal-card" id="proposalCard">
+      ${proposal.hook ? `<div class="proposal-row"><div class="p-label">🎣 Hook</div><div class="p-value">${escHtml(proposal.hook)}</div></div>` : ''}
+      ${proposal.solution ? `<div class="proposal-row"><div class="p-label">🛠 Solution</div><div class="p-value">${escHtml(proposal.solution)}</div></div>` : ''}
+      ${proposal.tech_stack ? `<div class="proposal-row"><div class="p-label">⚙ Tech Stack</div><div class="p-value"><div class="tags">${proposal.tech_stack.split(',').map(t => `<span class="tag">${escHtml(t.trim())}</span>`).join('')}</div></div></div>` : ''}
+      ${proposal.timeline ? `<div class="proposal-row"><div class="p-label">📅 Timeline</div><div class="p-value">${escHtml(proposal.timeline)}</div></div>` : ''}
+      ${proposal.closing_question ? `<div class="proposal-row"><div class="p-label">❓ Closing Question</div><div class="p-value" style="color:var(--accent-h);font-style:italic;">${escHtml(proposal.closing_question)}</div></div>` : ''}
+      ${proposal.upsell ? `<div class="proposal-row"><div class="p-label">📈 Upsell</div><div class="p-value" style="color:var(--green);">${escHtml(proposal.upsell)}</div></div>` : ''}
+    </div>
+  ` : `<p style="color:var(--muted);">No proposal generated yet.</p>`;
+
+  // ── Quote tab content ──────────────────────────────────────────
+  const confidence = qual.confidence || 0;
+  const confClass  = confidence >= 7 ? 'conf-high' : confidence >= 5 ? 'conf-medium' : 'conf-low';
+  const confWidth  = `${confidence * 10}%`;
+
+  const quoteHtml = qual && !qual.error && qual.problem_summary ? `
+    <div class="qualify-card">
+      <div class="qualify-row">
+        <div class="q-label">Problem</div>
+        <div class="q-value">${escHtml(qual.problem_summary || '—')}</div>
+      </div>
+      <div class="qualify-row">
+        <div class="q-label">Solution</div>
+        <div class="q-value">${escHtml(qual.automation_solution || '—')}</div>
+      </div>
+      <div class="qualify-row">
+        <div class="q-label">Build Time</div>
+        <div class="q-value">${qual.estimated_hours ? `~${qual.estimated_hours} hours` : '—'}</div>
+      </div>
+      <div class="qualify-row">
+        <div class="q-label">Pricing</div>
+        <div class="q-value">
+          <div class="price-grid">
+            <div class="price-item">
+              <div class="p-sub">Setup Fee</div>
+              <div class="p-amt">${qual.setup_fee ? `$${Number(qual.setup_fee).toLocaleString()}` : '—'}</div>
+            </div>
+            <div class="price-item">
+              <div class="p-sub">Monthly</div>
+              <div class="p-amt">${qual.monthly_maintenance ? `$${Number(qual.monthly_maintenance).toLocaleString()}` : '—'}</div>
+              <div class="p-note">maintenance</div>
+            </div>
           </div>
         </div>
-        <div class="analysis-item">
-          <div class="ai-label">Complexity</div>
-          <div class="ai-value">${analysis.estimated_complexity || '—'}</div>
+      </div>
+      <div class="qualify-row">
+        <div class="q-label">Client ROI</div>
+        <div class="q-value" style="color:var(--green);">${escHtml(qual.client_roi || '—')}</div>
+      </div>
+      <div class="qualify-row">
+        <div class="q-label">Confidence</div>
+        <div class="q-value">
+          <div class="confidence-bar-wrap">
+            <div class="confidence-bar">
+              <div class="confidence-fill ${confClass}" style="width:${confWidth};"></div>
+            </div>
+            <span style="font-size:.9rem;font-weight:700;">${confidence}<span style="color:var(--muted);font-weight:400;">/10</span></span>
+          </div>
         </div>
-        <div class="analysis-item">
-          <div class="ai-label">Ideal solution</div>
-          <div class="ai-value">${escHtml(analysis.ideal_solution || '—')}</div>
-        </div>
-        ${painPoints || techHints ? `
-        <div class="analysis-item full">
-          <div class="ai-label">Pain points & Tech</div>
-          ${painPoints}${techHints}
-        </div>
-        ` : ''}
       </div>
     </div>
-    ` : ''}
-
-    ${proposal && !proposal.error ? `
-    <div class="section">
-      <div class="section-title">Generated Proposal</div>
-      <div class="copy-btn-wrap">
-        <button class="btn btn-ghost btn-sm copy-all-btn" onclick="copyAll('${currentLeadId}')">📋 Copy full proposal</button>
-      </div>
-      <div class="proposal-card" id="proposalCard">
-        ${proposal.hook ? `
-        <div class="proposal-row">
-          <div class="p-label">🎣 Hook</div>
-          <div class="p-value">${escHtml(proposal.hook)}</div>
-        </div>` : ''}
-        ${proposal.solution ? `
-        <div class="proposal-row">
-          <div class="p-label">🛠 Solution</div>
-          <div class="p-value">${escHtml(proposal.solution)}</div>
-        </div>` : ''}
-        ${proposal.tech_stack ? `
-        <div class="proposal-row">
-          <div class="p-label">⚙ Tech Stack</div>
-          <div class="p-value"><div class="tags">${proposal.tech_stack.split(',').map(t => `<span class="tag">${escHtml(t.trim())}</span>`).join('')}</div></div>
-        </div>` : ''}
-        ${proposal.timeline ? `
-        <div class="proposal-row">
-          <div class="p-label">📅 Timeline</div>
-          <div class="p-value">${escHtml(proposal.timeline)}</div>
-        </div>` : ''}
-        ${proposal.closing_question ? `
-        <div class="proposal-row">
-          <div class="p-label">❓ Closing Question</div>
-          <div class="p-value" style="color:var(--accent-h);font-style:italic;">${escHtml(proposal.closing_question)}</div>
-        </div>` : ''}
-        ${proposal.upsell ? `
-        <div class="proposal-row">
-          <div class="p-label">📈 Upsell</div>
-          <div class="p-value" style="color:var(--green);">${escHtml(proposal.upsell)}</div>
-        </div>` : ''}
-      </div>
+  ` : `
+    <div style="text-align:center;padding:40px 20px;color:var(--muted);">
+      <div style="font-size:2.2rem;margin-bottom:12px;">🎯</div>
+      <p style="margin-bottom:16px;">Not qualified yet.</p>
+      <button class="btn btn-primary btn-sm" onclick="qualifyLead(${lead.id})">Run Qualifier</button>
     </div>
-    ` : `<div class="section"><p style="color:var(--muted);">No proposal generated yet.</p></div>`}
-
   `;
 
-  // Footer
+  // ── Build modal body ───────────────────────────────────────────
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-tabs">
+      <div class="modal-tab active" data-tab="overview"  onclick="switchTab('overview')">📋 Overview</div>
+      <div class="modal-tab"        data-tab="analysis"  onclick="switchTab('analysis')">🤖 Analysis</div>
+      <div class="modal-tab"        data-tab="proposal"  onclick="switchTab('proposal')">✉️ Proposal</div>
+      <div class="modal-tab"        data-tab="quote"     onclick="switchTab('quote')">💰 Quote</div>
+    </div>
+
+    <div id="tab-overview" class="tab-panel active">
+      <div class="section">
+        <div class="section-title">Description</div>
+        <div class="desc-box">${escHtml(lead.description || 'No description.')}</div>
+      </div>
+    </div>
+
+    <div id="tab-analysis" class="tab-panel">
+      <div class="section">
+        <div class="section-title">AI Analysis</div>
+        ${analysisHtml}
+      </div>
+    </div>
+
+    <div id="tab-proposal" class="tab-panel">
+      <div class="section">
+        <div class="section-title">Generated Proposal</div>
+        ${proposalHtml}
+      </div>
+    </div>
+
+    <div id="tab-quote" class="tab-panel">
+      <div class="section">
+        <div class="section-title">💰 Qualification & Quote</div>
+        ${quoteHtml}
+      </div>
+    </div>
+  `;
+
+  // ── Footer ─────────────────────────────────────────────────────
   const statuses = ['new', 'sent', 'won', 'skipped'];
   const statusLabels = { new: '🔵 New', sent: '✉️ Sent', won: '🏆 Won', skipped: '⏭ Skip' };
   const statusBtns = statuses.map(s => `
@@ -905,7 +1057,8 @@ function renderModal(lead) {
 
   document.getElementById('modalFooter').innerHTML = `
     <div class="status-actions">${statusBtns}</div>
-    <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="copyAll(${lead.id})">📋 Copy Proposal</button>
+    <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="qualifyLead(${lead.id})">🎯 Qualify</button>
+    <button class="btn btn-ghost btn-sm" onclick="copyAll(${lead.id})">📋 Copy Proposal</button>
   `;
 
   // Store proposal text for copy
@@ -942,6 +1095,31 @@ async function copyAll(id) {
   }
 }
 
+// ── Qualify lead ──────────────────────────────────────────────────
+async function qualifyLead(id) {
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Qualifying…'; }
+  try {
+    const res = await fetch(`/api/leads/${id}/qualify`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      toast('Lead qualified!', 'success');
+      // Reload modal to show new qualification data
+      const res2 = await fetch(`/api/leads/${id}`);
+      const lead = await res2.json();
+      renderModal(lead);
+      switchTab('quote');
+      refreshStats();
+    } else {
+      toast(`Qualify error: ${data.error}`, 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Run Qualifier'; }
+    }
+  } catch (e) {
+    toast(`Error: ${e.message}`, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Run Qualifier'; }
+  }
+}
+
 // ── Update status ─────────────────────────────────────────────────
 async function setStatus(id, status) {
   try {
@@ -968,7 +1146,7 @@ async function setStatus(id, status) {
         }
       }
       // Update modal meta badge
-      const metaBadge = document.querySelector('#modalMeta .status-badge');
+      const metaBadge = document.getElementById('metaStatusBadge');
       if (metaBadge) {
         metaBadge.className = `status-badge status-${status}`;
         metaBadge.textContent = status;

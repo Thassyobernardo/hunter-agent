@@ -43,6 +43,7 @@ def init_db():
                 keywords    TEXT,
                 analysis    TEXT,
                 proposal    TEXT,
+                qualification TEXT,
                 status      TEXT NOT NULL DEFAULT 'new',
                 created_at  TEXT NOT NULL,
                 updated_at  TEXT NOT NULL
@@ -52,6 +53,11 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_leads_source  ON leads(source);
             CREATE INDEX IF NOT EXISTS idx_leads_created ON leads(created_at DESC);
         """)
+        # Add qualification column to existing databases that predate this schema
+        try:
+            conn.execute("ALTER TABLE leads ADD COLUMN qualification TEXT")
+        except Exception:
+            pass  # column already exists
 
 
 def upsert_lead(source: str, title: str, description: str,
@@ -85,8 +91,17 @@ def save_proposal(lead_id: int, analysis: str, proposal: str):
         )
 
 
+def save_qualification(lead_id: int, qualification: str):
+    now = datetime.utcnow().isoformat()
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE leads SET qualification=?, updated_at=? WHERE id=?",
+            (qualification, now, lead_id)
+        )
+
+
 def update_status(lead_id: int, status: str):
-    allowed = {"new", "sent", "won", "skipped"}
+    allowed = {"new", "sent", "won", "skipped", "qualified", "skip"}
     if status not in allowed:
         raise ValueError(f"Invalid status: {status}")
     now = datetime.utcnow().isoformat()
