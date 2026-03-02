@@ -12,8 +12,8 @@ import database as db
 import qualifier
 import builder
 from scrapers import (
-    upwork_scraper, google_scraper, indeed_scraper,
-    simplyhired_scraper, twitter_scraper, linkedin_scraper,
+    upwork_scraper, remoteok_scraper, weworkremotely_scraper,
+    freelancer_scraper, twitter_scraper, linkedin_scraper,
 )
 
 logging.basicConfig(
@@ -61,25 +61,25 @@ def run_scan():
         log.error(f"Upwork scraper error: {e}")
 
     try:
-        n = google_scraper.scrape(keywords)
-        log.info(f"Google/DDG: +{n} leads")
+        n = remoteok_scraper.scrape(keywords)
+        log.info(f"RemoteOK: +{n} leads")
         total += n
     except Exception as e:
-        log.error(f"Google scraper error: {e}")
+        log.error(f"RemoteOK scraper error: {e}")
 
     try:
-        n = indeed_scraper.scrape(keywords)
-        log.info(f"Indeed: +{n} leads")
+        n = weworkremotely_scraper.scrape(keywords)
+        log.info(f"WeWorkRemotely: +{n} leads")
         total += n
     except Exception as e:
-        log.error(f"Indeed scraper error: {e}")
+        log.error(f"WeWorkRemotely scraper error: {e}")
 
     try:
-        n = simplyhired_scraper.scrape(keywords)
-        log.info(f"SimplyHired: +{n} leads")
+        n = freelancer_scraper.scrape(keywords)
+        log.info(f"Freelancer: +{n} leads")
         total += n
     except Exception as e:
-        log.error(f"SimplyHired scraper error: {e}")
+        log.error(f"Freelancer scraper error: {e}")
 
     try:
         n = twitter_scraper.scrape(keywords)
