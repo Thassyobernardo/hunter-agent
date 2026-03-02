@@ -26,7 +26,6 @@ DDG_URL = "https://html.duckduckgo.com/html/"
 QUERY_TEMPLATES = [
     'site:upwork.com/jobs "{keyword}"',
     'site:freelancer.com/projects "{keyword}"',
-    'site:fiverr.com/requests "{keyword}"',
 ]
 
 _USER_AGENTS = [
@@ -81,7 +80,7 @@ def scrape(keywords: list[str], max_per_query: int = 5) -> int:
             query = template.format(keyword=keyword)
 
             if request_count > 0:
-                time.sleep(random.uniform(8, 15))
+                time.sleep(random.uniform(3, 5))
             request_count += 1
 
             results = _search_ddg(query, max_results=max_per_query)
