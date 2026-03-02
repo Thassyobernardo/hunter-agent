@@ -13,7 +13,7 @@ import database as db
 import qualifier
 import builder
 from scrapers import (
-    upwork_scraper, remoteok_scraper, weworkremotely_scraper,
+    upwork_scraper, google_scraper, weworkremotely_scraper,
     freelancer_scraper, twitter_scraper, linkedin_scraper,
 )
 
@@ -59,7 +59,12 @@ def fromjson_filter(value):
 # ── Config ────────────────────────────────────────────────────────────────────
 
 def get_keywords() -> list[str]:
-    raw = os.getenv("KEYWORDS", "python developer,automation,web scraping,fastapi,flask")
+    raw = os.getenv(
+        "KEYWORDS",
+        "zapier automation,make.com workflow,n8n automation,crm automation,"
+        "whatsapp bot,chatbot development,workflow automation,email automation,"
+        "lead generation automation,ai agent,business automation,process automation",
+    )
     return [k.strip() for k in raw.split(",") if k.strip()]
 
 
@@ -82,11 +87,11 @@ def run_scan():
         log.error(f"Upwork scraper error: {e}")
 
     try:
-        n = remoteok_scraper.scrape(keywords)
-        log.info(f"RemoteOK: +{n} leads")
+        n = google_scraper.scrape(keywords)
+        log.info(f"Google/DDG: +{n} leads")
         total += n
     except Exception as e:
-        log.error(f"RemoteOK scraper error: {e}")
+        log.error(f"Google scraper error: {e}")
 
     try:
         n = weworkremotely_scraper.scrape(keywords)
