@@ -1,28 +1,29 @@
 """
-Upwork scraper via public RSS feeds (no API key required).
-RSS endpoint: https://www.upwork.com/ab/feed/jobs/rss?q=<keyword>&sort=recency
+Upwork scraper via Apify actor flash_mage/upwork.
 
-Uses a broad, hardcoded keyword list covering automation, AI, no-code, and
-freelance dev niches — much wider coverage than the user-configured KEYWORDS
-alone. User keywords are appended so their intent is always included too.
+Actor: flash_mage~upwork
+Input:  {"query": [keyword], "maxJobs": N}
+Output: list of job objects with fields:
+  - title
+  - link  (full Upwork job URL)
+  - data.opening.description
+  - data.opening.postedOn
 """
-import re
+import os
 import time
-import random
 import logging
-from datetime import datetime
 
-import feedparser
+import requests
 
 from database import upsert_lead, save_proposal
 from proposal_generator import process_lead
 
 log = logging.getLogger(__name__)
 
-BASE_URL = "https://www.upwork.com/ab/feed/jobs/rss"
 SOURCE = "upwork"
+ACTOR = "flash_mage~upwork"
+APIFY_BASE = "https://api.apify.com/v2/acts"
 
-# Focused on clients posting automation/chatbot/AI projects
 CORE_KEYWORDS = [
     "automation",
     "chatbot",
@@ -37,65 +38,68 @@ CORE_KEYWORDS = [
 ]
 
 
-def _strip_html(text: str) -> str:
-    return re.sub(r"<[^>]+>", " ", text or "").strip()
+def _get_token() -> str:
+    token = os.getenv("APIFY_TOKEN")
+    if not token:
+        raise RuntimeError("APIFY_TOKEN is not set.")
+    return token
 
 
-def _parse_entry(entry) -> dict:
-    posted = None
-    if hasattr(entry, "published_parsed") and entry.published_parsed:
-        try:
-            posted = datetime(*entry.published_parsed[:6]).isoformat()
-        except Exception:
-            posted = getattr(entry, "published", None)
+def _fetch_jobs(keyword: str, max_jobs: int = 5) -> list[dict]:
+    url = f"{APIFY_BASE}/{ACTOR}/run-sync-get-dataset-items"
+    try:
+        resp = requests.post(
+            url,
+            params={"token": _get_token(), "timeout": 60},
+            json={"query": [keyword], "maxJobs": max_jobs},
+            timeout=90,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        log.warning("[Upwork] Actor call failed for '%s': %s", keyword, e)
+        return []
 
+
+def _parse_job(item: dict) -> dict | None:
+    title = item.get("title", "").strip()
+    url   = item.get("link", "").strip()
+    if not title or not url:
+        return None
+    opening     = item.get("data", {}).get("opening", {})
+    description = opening.get("description", "")
+    posted_at   = opening.get("postedOn") or opening.get("publishTime")
     return {
-        "title":       entry.get("title", "No title"),
-        "url":         entry.get("link", ""),
-        "description": _strip_html(entry.get("summary", "")),
-        "author":      entry.get("author", None),
-        "posted_at":   posted,
+        "title":       title,
+        "url":         url,
+        "description": description,
+        "posted_at":   posted_at,
     }
 
 
-def scrape(keywords: list[str], max_per_keyword: int = 10) -> int:
-    # Merge hardcoded list with caller-supplied keywords, preserving order
+def scrape(keywords: list[str] = None, max_per_keyword: int = 5) -> int:
+    # Merge CORE_KEYWORDS with any extra caller keywords, deduplicating
     seen: set[str] = set()
-    all_keywords: list[str] = []
-    for kw in CORE_KEYWORDS + list(keywords):
+    all_kws: list[str] = []
+    for kw in CORE_KEYWORDS + list(keywords or []):
         key = kw.lower().strip()
         if key not in seen:
             seen.add(key)
-            all_keywords.append(kw)
+            all_kws.append(kw)
 
     saved = 0
 
-    for i, kw in enumerate(all_keywords):
+    for i, kw in enumerate(all_kws):
         if i > 0:
-            time.sleep(random.uniform(1, 3))
+            time.sleep(2)
 
-        feed_url = (
-            f"{BASE_URL}"
-            f"?q={kw.replace(' ', '+')}"
-            f"&sort=recency"
-            f"&paging=0%3B{max_per_keyword}"
-        )
+        jobs = _fetch_jobs(kw, max_jobs=max_per_keyword)
+        log.info("[Upwork] '%s' → %d jobs", kw, len(jobs))
 
-        try:
-            feed = feedparser.parse(feed_url)
-        except Exception as e:
-            log.warning("[Upwork] Feed fetch error for '%s': %s", kw, e)
-            continue
-
-        if not feed.entries:
-            log.debug("[Upwork] No entries for keyword: %s", kw)
-            continue
-
-        log.info("[Upwork] '%s' → %d entries", kw, len(feed.entries))
-
-        for entry in feed.entries[:max_per_keyword]:
-            parsed = _parse_entry(entry)
-            if not parsed["url"]:
+        for item in jobs:
+            parsed = _parse_job(item)
+            if not parsed:
                 continue
 
             lead_id = upsert_lead(
@@ -103,7 +107,7 @@ def scrape(keywords: list[str], max_per_keyword: int = 10) -> int:
                 title=parsed["title"],
                 description=parsed["description"],
                 url=parsed["url"],
-                author=parsed["author"],
+                author=None,
                 posted_at=parsed["posted_at"],
                 keywords=kw,
             )
