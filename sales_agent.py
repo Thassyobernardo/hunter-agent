@@ -15,16 +15,9 @@ def run_sales_cycle() -> int:
     then marks them as 'sent' in the database.
     """
     api_key = os.environ.get("RESEND_API_KEY")
-    if not api_key:
-        log.error("RESEND_API_KEY is not set. Cannot run sales cycle.")
-        return 0
     resend.api_key = api_key
 
     target_email = os.environ.get("TARGET_EMAIL")
-    if not target_email:
-        log.error("TARGET_EMAIL is not set. Don't know where to send the emails.")
-        return 0
-
     from_email = os.environ.get("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 
     leads = db.get_leads(status="built")
@@ -44,34 +37,24 @@ def run_sales_cycle() -> int:
             log.warning(f"Lead {lead_id} missing deliverable: {deliverable_path}")
             continue
 
-        try:
-            analysis_dict = json.loads(analysis_raw)
-            problem_summary = analysis_dict.get("problem_summary", "We identified your key business challenges.")
-        except Exception:
-            problem_summary = "We identified your key business challenges based on your request."
+        analysis_dict = json.loads(analysis_raw)
+        problem_summary = analysis_dict.get("problem_summary", "We identified your key business challenges.")
 
-        try:
-            proposal_dict = json.loads(proposal_raw)
-            technical_solution = proposal_dict.get("proposal", str(proposal_dict))
-            if not isinstance(technical_solution, str):
-                technical_solution = json.dumps(technical_solution, indent=2)
-        except Exception:
-            technical_solution = proposal_raw
+        proposal_dict = json.loads(proposal_raw)
+        technical_solution = proposal_dict.get("proposal", str(proposal_dict))
+        if not isinstance(technical_solution, str):
+            technical_solution = json.dumps(technical_solution, indent=2)
 
         payment_link = os.environ.get("PAYMENT_LINK", "https://your-payment-link.com/")
 
-        try:
-            with zipfile.ZipFile(deliverable_path, 'r') as zf:
-                file_list = zf.namelist()
-                # Exclude root directory entries if they end with '/' to keep list clean
-                clean_list = [f for f in file_list if not f.endswith('/')]
-                # Render a tree-like/list output
-                features_sample = "\n".join(f"- {f}" for f in clean_list[:20])
-                if len(clean_list) > 20:
-                    features_sample += f"\n... and {len(clean_list) - 20} more items."
-        except Exception as e:
-            log.error(f"Failed to read deliverable ZIP {deliverable_path}: {e}")
-            features_sample = "Project structure is ready but couldn't be previewed."
+        with zipfile.ZipFile(deliverable_path, 'r') as zf:
+            file_list = zf.namelist()
+            # Exclude root directory entries if they end with '/' to keep list clean
+            clean_list = [f for f in file_list if not f.endswith('/')]
+            # Render a tree-like/list output
+            features_sample = "\n".join(f"- {f}" for f in clean_list[:20])
+            if len(clean_list) > 20:
+                features_sample += f"\n... and {len(clean_list) - 20} more items."
 
         html_body = f"""
         <html>
@@ -103,22 +86,18 @@ def run_sales_cycle() -> int:
         </html>
         """
 
-        try:
-            params = {
-                "from": from_email,
-                "to": [target_email],
-                "subject": f"Your automated solution is ready: {title}",
-                "html": html_body,
-            }
-            
-            response = resend.Emails.send(params)
-            log.info(f"Email sent successfully for lead {lead_id}: {response}")
-            
-            db.update_status(lead_id, "sent")
-            sent_count += 1
-
-        except Exception as e:
-            log.error(f"Failed to send email for lead {lead_id}. Error: {e}")
+        params = {
+            "from": from_email,
+            "to": [target_email],
+            "subject": f"Your automated solution is ready: {title}",
+            "html": html_body,
+        }
+        
+        response = resend.Emails.send(params)
+        log.info(f"Email sent successfully for lead {lead_id}: {response}")
+        
+        db.update_status(lead_id, "sent")
+        sent_count += 1
 
     return sent_count
 
