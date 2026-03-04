@@ -184,8 +184,24 @@ def build_lead(lead_id: int) -> str:
         for f in files:
             archive_path = f"{slug}/{f['name'].lstrip('/')}"
             zf.writestr(archive_path, f["content"])
+            
+        # Add the INICIAR.bat file
+        bat_content = (
+            "@echo off\n"
+            "echo =========================================\n"
+            "echo      Iniciando seu Motor de Automacao     \n"
+            "echo =========================================\n"
+            "echo.\n"
+            "echo 1. Instalando dependencias (Python)...\n"
+            "pip install -r requirements.txt\n"
+            "echo.\n"
+            "echo 2. Executando o sistema principal...\n"
+            "python main.py\n"
+            "pause\n"
+        )
+        zf.writestr(f"{slug}/INICIAR.bat", bat_content)
 
-    log.info("Packaged %d files → %s", len(files), zip_path)
+    log.info("Packaged %d files (+ INICIAR.bat) → %s", len(files), zip_path)
 
     db.save_deliverable_path(lead_id, zip_path)
     db.update_status(lead_id, "built")

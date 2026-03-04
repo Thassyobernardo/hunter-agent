@@ -177,6 +177,17 @@ def get_lead(lead_id: int) -> dict | None:
     return dict(row) if row else None
 
 
+def count_recently_sent_leads(hours: int = 24) -> int:
+    cutoff = (datetime.utcnow() - timedelta(hours=hours)).isoformat()
+    with get_conn() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT COUNT(*) FROM leads WHERE status = 'sent' AND updated_at >= %s",
+            (cutoff,)
+        )
+        return cur.fetchone()[0]
+
+
 def get_stats() -> dict:
     # Use a Python-computed cutoff so we don't rely on any DB date functions
     cutoff = (datetime.utcnow() - timedelta(days=1)).isoformat()

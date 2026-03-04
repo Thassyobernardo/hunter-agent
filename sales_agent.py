@@ -23,6 +23,12 @@ def run_sales_cycle() -> int:
     print(f"DEBUG: API Key (first 5): {str(api_key)[:5]}...")
     print(f"DEBUG: FROM Email (first 5): {str(from_email)[:5]}...")
 
+    # Rate limiting: max 5 emails per day
+    sent_today = db.count_recently_sent_leads(hours=24)
+    if sent_today >= 5:
+        log.info(f"Daily limit reached: {sent_today}/5 emails sent in the last 24h. Stopping sales cycle.")
+        return 0
+
     leads = db.get_leads(status="built")
     if not leads:
         log.info("No leads with 'built' status found.")
@@ -40,21 +46,11 @@ def run_sales_cycle() -> int:
             log.warning(f"Lead {lead_id} missing deliverable: {deliverable_path}")
             continue
 
-        analysis_dict = json.loads(analysis_raw)
-        problem_summary = analysis_dict.get("problem_summary", "We identified your key business challenges.")
-
-        proposal_dict = json.loads(proposal_raw)
-        technical_solution = proposal_dict.get("proposal", str(proposal_dict))
-        if not isinstance(technical_solution, str):
-            technical_solution = json.dumps(technical_solution, indent=2)
-
-        payment_link = os.environ.get("PAYMENT_LINK", "https://your-payment-link.com/")
+        payment_link = os.environ.get("PAYMENT_LINK_URL", os.environ.get("PAYMENT_LINK", "https://your-payment-link.com/"))
 
         with zipfile.ZipFile(deliverable_path, 'r') as zf:
             file_list = zf.namelist()
-            # Exclude root directory entries if they end with '/' to keep list clean
             clean_list = [f for f in file_list if not f.endswith('/')]
-            # Render a tree-like/list output
             features_sample = "\n".join(f"- {f}" for f in clean_list[:20])
             if len(clean_list) > 20:
                 features_sample += f"\n... and {len(clean_list) - 20} more items."
@@ -62,29 +58,31 @@ def run_sales_cycle() -> int:
         html_body = f"""
         <html>
         <body style="font-family: sans-serif; color: #333; line-height: 1.6;">
-            <h2>Your Custom Project: {title}</h2>
-            <p>Hi there,</p>
-            <p>Based on your project description, we've developed a custom technical solution for you.</p>
+            <h2>Seu Sistema Sob Medida: {title}</h2>
+            <p>Olá!</p>
+            <p>Analisamos seu pedido e nossa engenharia já finalizou a criação do seu <b>Motor de Automação</b> exclusivo para o seu projeto.</p>
             
-            <h3>Problem Summary</h3>
-            <p>{problem_summary}</p>
+            <h3>O que é o Motor de Automação?</h3>
+            <p>Trata-se de um sistema completo com código-fonte gerado especificamente para as suas necessidades de negócio, pronto para rodar no seu computador ou servidor.</p>
             
-            <h3>Technical Solution</h3>
-            <pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; font-family: monospace;">{technical_solution}</pre>
-            
-            <h3>Project Sample / Expected Deliverables</h3>
-            <p>The original project has been successfully built and is securely stored on our servers. Here is a sample of the generated source code structure:</p>
+            <h3>Amostra da Estrutura Criada</h3>
+            <p>O seu projeto já está armazenado de forma segura em nossos servidores. Aqui está uma prévia da arquitetura interna desenvolvida para você:</p>
             <pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; font-family: monospace;">{features_sample}</pre>
             
-            <h3>Unlock the Full Code</h3>
-            <p>To automatically receive the full project ZIP file, please complete the payment using the link below:</p>
-            <p><a href="{payment_link}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Secure Your Code Now</a></p>
+            <h3>Como ativar seu sistema em 3 passos simples:</h3>
+            <p>Para simplificar sua vida, nós configuramos um método onde você não precisa ser programador para iniciar tudo.</p>
+            <ol>
+                <li><b>Acesse o Link:</b> Clique no botão de liberação do código abaixo.</li>
+                <li><b>Baixe o Projeto:</b> Você receberá o download do arquivo ZIP contendo todo o seu sistema.</li>
+                <li><b>Inicie a Mágica:</b> Extraia a pasta, dê <b>dois cliques</b> no arquivo <code>INICIAR.bat</code> e o sistema fará toda a instalação sozinho!</li>
+            </ol>
             
-            <h3>Let's Schedule a Demo</h3>
-            <p>If you'd like to see it in action before purchasing, we'd love to invite you to a brief 15-minute demonstration call.</p>
-            <p>Please reply to this email, and we'll schedule a time that works for you.</p>
+            <p><a href="{payment_link}" style="display: inline-block; margin-top: 15px; padding: 15px 25px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Liberar Acesso e Baixar Código Agora</a></p>
             
-            <p>Best regards,<br/>The Engineering Team</p>
+            <h3>Precisa de uma demonstração?</h3>
+            <p>Se quiser ver tudo funcionando antes de decidir, basta responder a este e-mail e agendaremos uma rápida chamada de 15 minutos pelo Zoom.</p>
+            
+            <p>Um abraço,<br/>Equipe de Engenharia</p>
         </body>
         </html>
         """
