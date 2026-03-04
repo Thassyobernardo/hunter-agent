@@ -13,6 +13,7 @@ import database as db
 import qualifier
 import builder
 from scrapers import upwork_scraper
+import sales_agent
 
 logging.basicConfig(
     level=logging.INFO,
@@ -246,6 +247,13 @@ def start_scheduler():
         run_scan,
         trigger=IntervalTrigger(hours=interval_hours),
         id="scan",
+        replace_existing=True,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        sales_agent.run_sales_cycle,
+        trigger=IntervalTrigger(minutes=60),
+        id="sales",
         replace_existing=True,
         coalesce=True,
     )
