@@ -4,6 +4,8 @@ import logging
 from dotenv import load_dotenv
 load_dotenv()
 from datetime import datetime
+import time
+import threading
 from flask import Flask, render_template, jsonify, request, abort, send_file
 from werkzeug.exceptions import HTTPException
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -277,8 +279,12 @@ def start_scheduler():
     log.info(f"Scheduler started — scanning every {interval_hours}h")
     
     # Run the sales cycle once immediately on startup for testing
-    log.info("Running initial sales cycle on startup...")
-    sales_agent.run_sales_cycle()
+    def delayed_sales_cycle():
+        log.info("Waiting 10 seconds before running initial sales cycle on startup...")
+        time.sleep(10)
+        sales_agent.run_sales_cycle()
+
+    threading.Thread(target=delayed_sales_cycle, daemon=True).start()
     
     return scheduler
 
