@@ -14,6 +14,8 @@ import qualifier
 import builder
 from scrapers import upwork_scraper
 import sales_agent
+import manager_agent
+import support_agent
 
 logging.basicConfig(
     level=logging.INFO,
@@ -251,14 +253,33 @@ def start_scheduler():
         coalesce=True,
     )
     scheduler.add_job(
+        manager_agent.run_manager_cycle,
+        trigger=IntervalTrigger(hours=3),
+        id="manager",
+        replace_existing=True,
+        coalesce=True,
+    )
+    scheduler.add_job(
         sales_agent.run_sales_cycle,
-        trigger=IntervalTrigger(minutes=60),
+        trigger=IntervalTrigger(hours=1),
         id="sales",
+        replace_existing=True,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        support_agent.run_support_cycle,
+        trigger=IntervalTrigger(hours=1),
+        id="support",
         replace_existing=True,
         coalesce=True,
     )
     scheduler.start()
     log.info(f"Scheduler started — scanning every {interval_hours}h")
+    
+    # Run the sales cycle once immediately on startup for testing
+    log.info("Running initial sales cycle on startup...")
+    sales_agent.run_sales_cycle()
+    
     return scheduler
 
 
