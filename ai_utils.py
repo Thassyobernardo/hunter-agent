@@ -1,13 +1,17 @@
 """
-Shared Cerebras client, model constant, and retry logic.
+Shared Groq client, model constant, and retry logic.
 Imported by proposal_generator.py, qualifier.py, and builder.py.
+
+Switched from Cerebras to Groq to avoid 429 rate limits.
+The Groq SDK mirrors the OpenAI interface so all callers
+continue to work without changes.
 """
 import os
 import time
 import random
 import logging
-from cerebras.cloud.sdk import (
-    Cerebras,
+from groq import (
+    Groq,
     BadRequestError,
     APIStatusError,
     APIConnectionError,
@@ -16,20 +20,20 @@ from cerebras.cloud.sdk import (
 
 log = logging.getLogger(__name__)
 
-MODEL = "gpt-oss-120b"
+MODEL = "llama-3.3-70b-versatile"
 
-_client: Cerebras | None = None
+_client: Groq | None = None
 
 
-def get_client() -> Cerebras:
-    """Return a lazily-initialised Cerebras singleton.
+def get_client() -> Groq:
+    """Return a lazily-initialised Groq singleton.
     max_retries=0 so our own retry loop (call_with_retry) is in full control."""
     global _client
     if _client is None:
-        api_key = os.getenv("CEREBRAS_API_KEY")
+        api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
-            raise RuntimeError("CEREBRAS_API_KEY is not set. Add it to your .env file.")
-        _client = Cerebras(api_key=api_key, max_retries=0)
+            raise RuntimeError("GROQ_API_KEY is not set. Add it to your Railway env vars.")
+        _client = Groq(api_key=api_key, max_retries=0)
     return _client
 
 
@@ -45,11 +49,11 @@ def call_with_retry(fn, *, max_retries: int = 4):
             return fn()
         except RateLimitError as e:
             if attempt == max_retries:
-                log.error("Cerebras rate limit hit — no retries left, giving up.")
+                log.error("Groq rate limit hit — no retries left, giving up.")
                 raise
             wait = (2 ** attempt) + random.uniform(0, 1)
             log.warning(
-                "Cerebras rate limit (429) — retrying in %.1fs (attempt %d/%d)…",
+                "Groq rate limit (429) — retrying in %.1fs (attempt %d/%d)…",
                 wait, attempt + 1, max_retries,
             )
             time.sleep(wait)
