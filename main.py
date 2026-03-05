@@ -282,13 +282,6 @@ def start_scheduler():
     def delayed_startup_cycle():
         log.info("Waiting 10 seconds before running initial startup cycles...")
         time.sleep(10)
-        
-        try:
-            log.info("Hard-resetting leads 575 and 531 to 'new' for testing...")
-            db.update_status(575, "new")
-            db.update_status(531, "new")
-        except Exception as e:
-            log.warning(f"Failed to reset test leads: {e}")
 
         log.info("Running manager cycle to build leads...")
         manager_agent.run_manager_cycle()
