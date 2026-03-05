@@ -18,7 +18,6 @@ from scrapers import upwork_scraper
 import sales_agent
 import manager_agent
 import support_agent
-import orchestrator
 
 logging.basicConfig(
     level=logging.INFO,
@@ -94,7 +93,6 @@ def run_scan():
 # ── Flask routes ──────────────────────────────────────────────────────────────
 
 @app.route("/")
-@app.route("/dashboard")
 def dashboard():
     try:
         stats = db.get_stats()
@@ -249,35 +247,52 @@ def health():
 def start_scheduler():
     interval_hours = get_scan_interval()
     scheduler = BackgroundScheduler(daemon=True)
- 
-    # Unified Orchestrator: Runs the full agency cycle (Scan -> Manage -> Sell -> Support)
     scheduler.add_job(
-        orchestrator.run_full_agency_cycle,
+        run_scan,
         trigger=IntervalTrigger(hours=interval_hours),
-        id="agency_cycle",
+        id="scan",
         replace_existing=True,
         coalesce=True,
     )
- 
+    scheduler.add_job(
+        manager_agent.run_manager_cycle,
+        trigger=IntervalTrigger(hours=3),
+        id="manager",
+        replace_existing=True,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        sales_agent.run_sales_cycle,
+        trigger=IntervalTrigger(hours=1),
+        id="sales",
+        replace_existing=True,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        support_agent.run_support_cycle,
+        trigger=IntervalTrigger(hours=1),
+        id="support",
+        replace_existing=True,
+        coalesce=True,
+    )
     scheduler.start()
-    log.info(f"Scheduler started — full agency cycle every {interval_hours}h")
- 
-    # Initial startup cycle
-    def startup_cycle():
-        log.info("Waiting 10 seconds before running initial orchestrator cycle...")
+    log.info(f"Scheduler started — scanning every {interval_hours}h")
+    
+    # Run the manager and sales cycles once on startup for testing
+    def delayed_startup_cycle():
+        log.info("Waiting 10 seconds before running initial startup cycles...")
         time.sleep(10)
-        log.info("Running initial multi-agent cycle via LangGraph...")
-        # Reset skipped leads first to catch them in this cycle
-        try:
-            import reset_skipped
-            reset_skipped.reset_skipped_leads()
-        except Exception as e:
-            log.warning(f"Could not reset skipped leads: {e}")
-            
-        orchestrator.run_full_agency_cycle()
+        log.info("Running manager cycle to build leads...")
+        manager_agent.run_manager_cycle()
+        
+        log.info("Manager cycle finished. Waiting 60 seconds before running sales cycle to ensure all ZIPs are written...")
+        time.sleep(60)
+        
+        log.info("Running sales cycle to dispatch emails...")
+        sales_agent.run_sales_cycle()
 
-    threading.Thread(target=startup_cycle, daemon=True).start()
- 
+    threading.Thread(target=delayed_startup_cycle, daemon=True).start()
+    
     return scheduler
 
 
@@ -290,7 +305,7 @@ except Exception as e:
     log.warning(f"Database not reachable at startup (will retry): {e}")
 
 # Start the scheduler; the first scan fires after SCAN_INTERVAL_HOURS.
-_scheduler = start_scheduler()
+# _scheduler = start_scheduler()
 
 
 if __name__ == "__main__":

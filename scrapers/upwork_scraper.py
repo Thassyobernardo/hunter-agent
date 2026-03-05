@@ -24,10 +24,19 @@ from proposal_generator import process_lead
 log = logging.getLogger(__name__)
 
 SOURCE = "upwork"
-ACTOR = "flash_mage/upwork"
+ACTOR = "jan.mraz/upwork-jobs-scraper"
 
 CORE_KEYWORDS = [
     "zapier automation",
+    "n8n automation",
+    "crm automation",
+    "whatsapp bot",
+    "chatbot",
+    "workflow automation",
+    "email automation",
+    "ai agent",
+    "business automation",
+    "make.com"
 ]
 
 
@@ -41,7 +50,12 @@ def _get_client() -> ApifyClient:
 
 def _fetch_jobs(client: ApifyClient, keyword: str, max_jobs: int = 5) -> list[dict]:
     try:
-        run_input = {"query": [keyword], "maxJobs": max_jobs}
+        # jan.mraz/upwork-jobs-scraper input format
+        run_input = {
+            "queries": [keyword],
+            "maxResults": max_jobs,
+            "sort": "recency"
+        }
         log.info(f"[Upwork] Starting actor run for '{keyword}' with input: {run_input}")
         run = client.actor(ACTOR).call(run_input=run_input, timeout_secs=300)
         items = client.dataset(run["defaultDatasetId"]).list_items().items
@@ -52,13 +66,13 @@ def _fetch_jobs(client: ApifyClient, keyword: str, max_jobs: int = 5) -> list[di
 
 
 def _parse_job(item: dict) -> dict | None:
+    # jan.mraz/upwork-jobs-scraper output format
     title = item.get("title", "").strip()
-    url   = item.get("link", "").strip()
+    url   = item.get("url", "").strip()
     if not title or not url:
         return None
-    opening     = item.get("data", {}).get("opening", {})
-    description = opening.get("description", "")
-    posted_at   = opening.get("postedOn") or opening.get("publishTime")
+    description = item.get("description", "")
+    posted_at   = item.get("posted_time") or item.get("published_at")
     return {
         "title":       title,
         "url":         url,
@@ -67,7 +81,7 @@ def _parse_job(item: dict) -> dict | None:
     }
 
 
-def scrape(keywords: list[str] = None, max_per_keyword: int = 5) -> int:
+def scrape(keywords: list[str] = [], max_per_keyword: int = 5) -> int:
     client = _get_client()
 
     # Merge CORE_KEYWORDS with any extra caller keywords, deduplicating
@@ -104,14 +118,7 @@ def scrape(keywords: list[str] = None, max_per_keyword: int = 5) -> int:
             )
 
             if lead_id:
-                try:
-                    analysis, proposal = process_lead(
-                        lead_id, SOURCE, parsed["title"], parsed["description"]
-                    )
-                    save_proposal(lead_id, analysis, proposal)
-                    saved += 1
-                    log.info("[Upwork] Saved #%d: %s", lead_id, parsed["title"][:60])
-                except Exception as e:
-                    log.warning("[Upwork] Proposal error #%d: %s", lead_id, e)
+                saved += 1
+                log.info("[Upwork] Saved #%d: %s", lead_id, parsed["title"][:60])
 
     return saved
