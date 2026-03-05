@@ -93,6 +93,7 @@ def run_scan():
 # ── Flask routes ──────────────────────────────────────────────────────────────
 
 @app.route("/")
+@app.route("/dashboard")
 def dashboard():
     try:
         stats = db.get_stats()
