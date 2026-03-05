@@ -56,6 +56,8 @@ def init_db():
                 qualification    TEXT,
                 deliverable_path TEXT,
                 status           TEXT NOT NULL DEFAULT 'new',
+                sequence_stage   INTEGER DEFAULT 0,
+                last_contact_at  TEXT,
                 created_at       TEXT NOT NULL,
                 updated_at       TEXT NOT NULL
             )
@@ -75,6 +77,8 @@ def init_db():
         for col, definition in [
             ("qualification",    "TEXT"),
             ("deliverable_path", "TEXT"),
+            ("sequence_stage",   "INTEGER DEFAULT 0"),
+            ("last_contact_at",  "TEXT")
         ]:
             cur.execute(
                 f"ALTER TABLE leads ADD COLUMN IF NOT EXISTS {col} {definition}"
@@ -143,9 +147,26 @@ def update_status(lead_id: int, status: str):
     with get_conn() as conn:
         cur = conn.cursor()
         cur.execute(
-            "UPDATE leads SET status=%s, updated_at=%s WHERE id=%s",
-            (status, now, lead_id),
+            "UPDATE leads SET status=%s, updated_at=%s, last_contact_at=%s WHERE id=%s",
+            (status, now, now, lead_id),
         )
+
+def update_sequence_stage(lead_id: int, stage: int):
+    now = datetime.utcnow().isoformat()
+    with get_conn() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE leads SET sequence_stage=%s, last_contact_at=%s, updated_at=%s WHERE id=%s",
+            (stage, now, now, lead_id),
+        )
+
+def get_followup_leads(days_since: int = 2) -> list[dict]:
+    cutoff = (datetime.utcnow() - timedelta(days=days_since)).isoformat()
+    query = "SELECT * FROM leads WHERE status = 'sent' AND sequence_stage < 3 AND last_contact_at <= %s"
+    with get_conn() as conn:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(query, (cutoff,))
+        return [dict(r) for r in cur.fetchall()]
 
 
 def get_leads(status: str = None, source: str = None,
