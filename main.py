@@ -284,6 +284,10 @@ def start_scheduler():
         time.sleep(10)
         log.info("Running manager cycle to build leads...")
         manager_agent.run_manager_cycle()
+        
+        log.info("Manager cycle finished. Waiting 60 seconds before running sales cycle to ensure all ZIPs are written...")
+        time.sleep(60)
+        
         log.info("Running sales cycle to dispatch emails...")
         sales_agent.run_sales_cycle()
 
