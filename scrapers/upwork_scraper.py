@@ -1,6 +1,9 @@
 """
 Upwork scraper via Apify actor flash_mage/upwork.
 
+Uses the official apify-client library instead of the sync HTTP endpoint
+to avoid 400/timeout errors on large result sets.
+
 Actor: flash_mage~upwork
 Input:  {"query": [keyword], "maxJobs": N}
 Output: list of job objects with fields:
@@ -13,7 +16,7 @@ import os
 import time
 import logging
 
-import requests
+from apify_client import ApifyClient
 
 from database import upsert_lead, save_proposal
 from proposal_generator import process_lead
@@ -21,34 +24,28 @@ from proposal_generator import process_lead
 log = logging.getLogger(__name__)
 
 SOURCE = "upwork"
-ACTOR = "flash_mage~upwork"
-APIFY_BASE = "https://api.apify.com/v2/acts"
+ACTOR = "flash_mage/upwork"
 
 CORE_KEYWORDS = [
     "zapier automation",
 ]
 
 
-def _get_token() -> str:
+def _get_client() -> ApifyClient:
     token = os.getenv("APIFY_TOKEN")
     log.info(f"[Upwork] APIFY_TOKEN (first 8): {str(token)[:8]}...")
     if not token:
         raise RuntimeError("APIFY_TOKEN is not set.")
-    return token
+    return ApifyClient(token)
 
 
-def _fetch_jobs(keyword: str, max_jobs: int = 5) -> list[dict]:
-    url = f"{APIFY_BASE}/{ACTOR}/run-sync-get-dataset-items"
+def _fetch_jobs(client: ApifyClient, keyword: str, max_jobs: int = 5) -> list[dict]:
     try:
-        resp = requests.post(
-            url,
-            params={"token": _get_token(), "timeout": 60},
-            json={"query": [keyword], "maxJobs": max_jobs},
-            timeout=90,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        return data if isinstance(data, list) else []
+        run_input = {"query": [keyword], "maxJobs": max_jobs}
+        log.info(f"[Upwork] Starting actor run for '{keyword}' with input: {run_input}")
+        run = client.actor(ACTOR).call(run_input=run_input, timeout_secs=120)
+        items = client.dataset(run["defaultDatasetId"]).list_items().items
+        return items if isinstance(items, list) else []
     except Exception as e:
         log.warning("[Upwork] Actor call failed for '%s': %s", keyword, e)
         return []
@@ -71,6 +68,8 @@ def _parse_job(item: dict) -> dict | None:
 
 
 def scrape(keywords: list[str] = None, max_per_keyword: int = 5) -> int:
+    client = _get_client()
+
     # Merge CORE_KEYWORDS with any extra caller keywords, deduplicating
     seen: set[str] = set()
     all_kws: list[str] = []
@@ -86,7 +85,7 @@ def scrape(keywords: list[str] = None, max_per_keyword: int = 5) -> int:
         if i > 0:
             time.sleep(2)
 
-        jobs = _fetch_jobs(kw, max_jobs=max_per_keyword)
+        jobs = _fetch_jobs(client, kw, max_jobs=max_per_keyword)
         log.info("[Upwork] '%s' → %d jobs", kw, len(jobs))
 
         for item in jobs:
