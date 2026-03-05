@@ -627,12 +627,6 @@
         Skipped <span class="badge" id="badge-skipped">{{ stats.by_status.get('skipped', 0) }}</span>
       </div>
 
-      <div class="nav-label" style="margin-top:16px;">Sources</div>
-      {% for source, cnt in stats.by_source.items() %}
-      <div class="nav-item" data-filter-source="{{ source }}" onclick="setSourceFilter(this, '{{ source }}')">
-        {{ source|capitalize }} <span class="badge">{{ cnt }}</span>
-      </div>
-      {% endfor %}
     </nav>
 
     <div class="sidebar-footer">
