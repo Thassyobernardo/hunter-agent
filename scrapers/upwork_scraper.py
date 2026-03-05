@@ -24,7 +24,7 @@ from proposal_generator import process_lead
 log = logging.getLogger(__name__)
 
 SOURCE = "upwork"
-ACTOR = "jan.mraz/upwork-jobs-scraper"
+ACTOR = "jan.mraz~upwork-jobs-scraper"
 
 CORE_KEYWORDS = [
     "zapier automation",
