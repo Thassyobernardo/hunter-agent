@@ -31,6 +31,19 @@ def run_manager_cycle() -> dict:
     qualified_count = 0
     built_count = 0
     processed_count = 0
+    rebuilt_count = 0
+
+    # 0. Rebuild missing ZIPs for already 'built' leads (e.g. after container restart)
+    built_leads = db.get_leads(status="built")
+    for lead in built_leads:
+        deliverable = lead.get("deliverable_path")
+        if not deliverable or not os.path.exists(deliverable):
+            log.warning(f"Manager Agent: Lead {lead['id']} is 'built' but ZIP is missing. Rebuilding...")
+            try:
+                builder.build_lead(lead["id"])
+                rebuilt_count += 1
+            except Exception as e:
+                log.error(f"Manager Agent: Failed to rebuild lead {lead['id']}: {e}")
 
     log.info(f"Manager Agent: Found {len(leads)} 'new' leads to evaluate.")
 
@@ -77,6 +90,7 @@ def run_manager_cycle() -> dict:
                     <li>Leads Processed: <b>{processed_count}</b></li>
                     <li>High Urgency Leads Qualified: <b>{qualified_count}</b></li>
                     <li>Projects Successfully Built: <b>{built_count}</b></li>
+                    <li>Missing Projects Rebuilt: <b>{rebuilt_count}</b></li>
                 </ul>
                 <p>The Sales Agent will take over the built leads in its next cycle.</p>
             </body>
