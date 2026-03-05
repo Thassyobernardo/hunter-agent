@@ -284,13 +284,19 @@ def start_scheduler():
         log.info("Waiting 10 seconds before running initial startup cycles...")
         time.sleep(10)
 
-        log.info("Running startup scan to fetch fresh leads...")
-        try:
-            run_scan()
-        except Exception as e:
-            log.error(f"Startup scan failed: {e}")
+        # Fire scan in its own thread so it doesn't block lead processing
+        def background_scan():
+            try:
+                log.info("[Background] Running startup scan to fetch fresh leads...")
+                run_scan()
+                log.info("[Background] Startup scan completed.")
+            except Exception as e:
+                log.error(f"[Background] Startup scan failed: {e}")
 
-        log.info("Running manager cycle to build leads...")
+        threading.Thread(target=background_scan, daemon=True).start()
+
+        # Process existing leads immediately (we already have 54 in the DB)
+        log.info("Running manager cycle to build existing leads...")
         manager_agent.run_manager_cycle()
         
         log.info("Manager cycle finished. Waiting 60 seconds before running sales cycle to ensure all ZIPs are written...")
