@@ -25,21 +25,13 @@ ACTOR = "flash_mage~upwork"
 APIFY_BASE = "https://api.apify.com/v2/acts"
 
 CORE_KEYWORDS = [
-    "automation",
-    "chatbot",
-    "zapier",
-    "n8n",
-    "crm",
-    "whatsapp bot",
-    "workflow",
-    "ai agent",
-    "make.com",
-    "email automation",
+    "zapier automation",
 ]
 
 
 def _get_token() -> str:
     token = os.getenv("APIFY_TOKEN")
+    log.info(f"[Upwork] APIFY_TOKEN (first 8): {str(token)[:8]}...")
     if not token:
         raise RuntimeError("APIFY_TOKEN is not set.")
     return token

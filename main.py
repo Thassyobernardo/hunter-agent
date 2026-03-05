@@ -284,6 +284,12 @@ def start_scheduler():
         log.info("Waiting 10 seconds before running initial startup cycles...")
         time.sleep(10)
 
+        log.info("Running startup scan to fetch fresh leads...")
+        try:
+            run_scan()
+        except Exception as e:
+            log.error(f"Startup scan failed: {e}")
+
         log.info("Running manager cycle to build leads...")
         manager_agent.run_manager_cycle()
         
