@@ -63,6 +63,36 @@ def init_db():
             )
         """)
 
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS emails_sent (
+                id          SERIAL PRIMARY KEY,
+                lead_id     INTEGER REFERENCES leads(id) ON DELETE CASCADE,
+                subject     TEXT NOT NULL,
+                sent_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                opened      BOOLEAN NOT NULL DEFAULT FALSE,
+                replied     BOOLEAN NOT NULL DEFAULT FALSE
+            )
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS agent_logs (
+                id          SERIAL PRIMARY KEY,
+                action      TEXT NOT NULL,
+                details     JSONB,
+                created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS security_log (
+                id               SERIAL PRIMARY KEY,
+                threat_type      TEXT NOT NULL,
+                source           TEXT,
+                content_preview  TEXT,
+                created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+
         cur.execute(
             "CREATE INDEX IF NOT EXISTS idx_leads_status  ON leads(status)"
         )
