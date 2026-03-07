@@ -112,6 +112,7 @@ def run_scan():
 # ── Flask routes ──────────────────────────────────────────────────────────────
 
 @app.route("/")
+@app.route("/dashboard")
 def dashboard():
     try:
         stats = db.get_stats()
@@ -259,7 +260,16 @@ def api_download_lead(lead_id):
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "time": datetime.utcnow().isoformat()})
+    return jsonify({"status": "ok", "agent": "claw", "time": datetime.utcnow().isoformat()})
+
+@app.route("/run-now")
+def run_now_alias():
+    """Alias for manual scan via GET for convenience."""
+    try:
+        total = run_scan()
+        return jsonify({"ok": True, "new_leads": total})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 @app.route("/test-telegram")
 def test_telegram():
@@ -270,44 +280,7 @@ def test_telegram():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
-@app.route("/dashboard")
-def simple_dashboard():
-    from datetime import date
-    today = date.today().isoformat()
-    try:
-        with db.get_conn() as conn:
-            cur = conn.cursor()
-            
-            cur.execute("SELECT COUNT(*) FROM leads WHERE created_at::text LIKE %s", (f"{today}%",))
-            leads_today = cur.fetchone()[0]
-            
-            cur.execute("SELECT COUNT(*) FROM emails_sent WHERE sent_at::date = %s", (today,))
-            emails_today = cur.fetchone()[0]
-            
-            cur.execute(
-                "SELECT COUNT(*) FROM emails_sent "
-                "WHERE opened = true AND replied = true "
-                "AND sent_at::date = %s", (today,)
-            )
-            replies_today = cur.fetchone()[0]
-        
-        html = f"""
-        <!doctype html>
-        <html>
-        <head><title>Claw Agency Dashboard</title><style>body{{font-family:sans-serif;margin:40px;background:#0a0a0f;color:#e0e0e0;}} .card{{background:#111;padding:20px;margin:10px 0;border-radius:8px;border:1px solid #222;}} h1{{color:#f0c060;}}</style></head>
-        <body>
-            <h1>📊 Stats de Hoje</h1>
-            <div class="card"><b>Leads found:</b> {leads_today}</div>
-            <div class="card"><b>Emails sent:</b> {emails_today}</div>
-            <div class="card"><b>Replies received:</b> {replies_today}</div>
-            <br><a href="/test-telegram" style="color:#50d8c8;">[Trigger Telegram Test]</a>
-        </body>
-        </html>
-        """
-        return html
-    except Exception as e:
-        log.error(f"Dashboard error: {e}")
-        return f"Error loading dashboard: {str(e)}", 500
+# (Legacy simple dashboard removed to favour premium /dashboard route)
 
 
 # ── Startup ───────────────────────────────────────────────────────────────────
