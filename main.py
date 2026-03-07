@@ -30,11 +30,7 @@ app = Flask(__name__)
 # Initialise Telegram scheduler
 from scheduler import init_scheduler
 init_scheduler(app)
-<<<<<<< HEAD
 app.secret_key = os.getenv("SECRET_KEY", f"{config.AGENCY_NAME.lower()}-secret")
-=======
-app.secret_key = os.getenv("SECRET_KEY", "hunter-agent-secret")
->>>>>>> 86247a63009975daf0fdd0e5cab75e22326c39f4
 
 # Initialise the DB schema on the first non-health request so Flask can
 # bind and respond to /health immediately without waiting for PostgreSQL.
