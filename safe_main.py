@@ -244,6 +244,15 @@ def api_download_lead(lead_id):
 def health():
     return jsonify({"status": "ok", "time": datetime.utcnow().isoformat()})
 
+@app.route("/test-telegram")
+def test_telegram():
+    from scheduler import daily_telegram_report
+    try:
+        daily_telegram_report()
+        return jsonify({"ok": True, "message": "Telegram report triggered"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 
