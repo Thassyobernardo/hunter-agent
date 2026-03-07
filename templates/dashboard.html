@@ -1,33 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"> <!-- CLAW_V2_DEPLOYED_FOR_B2B -->
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hunter Agent — Lead Dashboard</title>
   <style>
     /* ── Reset & Base ────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:        #0d0f14;
-      --surface:   #161923;
-      --surface2:  #1e2330;
-      --border:    #2a2f3d;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --accent:    #6366f1;
-      --accent-h:  #818cf8;
-      --green:     #22c55e;
-      --yellow:    #eab308;
-      --red:       #ef4444;
-      --blue:      #3b82f6;
-      --purple:    #a855f7;
-      --cyan:      #06b6d4;
-      --radius:    10px;
-      --shadow:    0 4px 24px rgba(0,0,0,.4);
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    html { font-size: 15px; }
+    :root {
+      --bg: #0d0f14;
+      --surface: #161923;
+      --surface2: #1e2330;
+      --border: #2a2f3d;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --accent: #6366f1;
+      --accent-h: #818cf8;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, .4);
+    }
+
+    html {
+      font-size: 15px;
+    }
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
@@ -36,11 +46,20 @@
       line-height: 1.6;
     }
 
-    a { color: var(--accent-h); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    a {
+      color: var(--accent-h);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
 
     /* ── Layout ──────────────────────────────────────────────────── */
-    .layout { display: flex; min-height: 100vh; }
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
 
     /* ── Sidebar ─────────────────────────────────────────────────── */
     .sidebar {
@@ -64,17 +83,34 @@
       padding: 0 20px 24px;
       border-bottom: 1px solid var(--border);
     }
+
     .logo-icon {
-      width: 36px; height: 36px;
+      width: 36px;
+      height: 36px;
       background: linear-gradient(135deg, var(--accent), var(--purple));
       border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 18px;
     }
-    .logo-text { font-weight: 700; font-size: 1.05rem; letter-spacing: -.3px; }
-    .logo-sub  { font-size: .7rem; color: var(--muted); }
 
-    .nav { padding: 16px 0; flex: 1; }
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -.3px;
+    }
+
+    .logo-sub {
+      font-size: .7rem;
+      color: var(--muted);
+    }
+
+    .nav {
+      padding: 16px 0;
+      flex: 1;
+    }
+
     .nav-label {
       font-size: .65rem;
       font-weight: 600;
@@ -83,8 +119,11 @@
       color: var(--muted);
       padding: 8px 20px 4px;
     }
+
     .nav-item {
-      display: flex; align-items: center; gap: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       padding: 9px 20px;
       cursor: pointer;
       transition: background .15s, color .15s;
@@ -92,12 +131,18 @@
       font-size: .9rem;
       border-left: 3px solid transparent;
     }
-    .nav-item:hover { background: var(--surface2); color: var(--text); }
+
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
     .nav-item.active {
-      background: rgba(99,102,241,.12);
+      background: rgba(99, 102, 241, .12);
       border-left-color: var(--accent);
       color: var(--accent-h);
     }
+
     .nav-item .badge {
       margin-left: auto;
       background: var(--surface2);
@@ -107,7 +152,12 @@
       padding: 1px 7px;
       border-radius: 20px;
     }
-    .nav-item.active .badge { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .nav-item.active .badge {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
 
     .sidebar-footer {
       padding: 16px 20px;
@@ -115,7 +165,14 @@
       font-size: .75rem;
       color: var(--muted);
     }
-    .sidebar-footer .kw-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+
+    .sidebar-footer .kw-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
     .sidebar-footer .kw-tag {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -145,9 +202,17 @@
       top: 0;
       z-index: 10;
     }
-    .topbar h1 { font-size: 1.1rem; font-weight: 600; flex: 1; }
 
-    .search-wrap { position: relative; }
+    .topbar h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
     .search-wrap input {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -159,15 +224,24 @@
       outline: none;
       transition: border .15s;
     }
-    .search-wrap input:focus { border-color: var(--accent); }
+
+    .search-wrap input:focus {
+      border-color: var(--accent);
+    }
+
     .search-wrap .icon {
-      position: absolute; left: 10px; top: 50%;
+      position: absolute;
+      left: 10px;
+      top: 50%;
       transform: translateY(-50%);
-      color: var(--muted); font-size: .85rem;
+      color: var(--muted);
+      font-size: .85rem;
     }
 
     .btn {
-      display: inline-flex; align-items: center; gap: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       padding: 8px 14px;
       border-radius: var(--radius);
       border: none;
@@ -176,17 +250,39 @@
       font-weight: 500;
       transition: opacity .15s, transform .1s;
     }
-    .btn:active { transform: scale(.97); }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: var(--accent-h); }
+
+    .btn:active {
+      transform: scale(.97);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-h);
+    }
+
     .btn-ghost {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text);
     }
-    .btn-ghost:hover { background: var(--surface2); }
-    .btn-sm { padding: 5px 10px; font-size: .78rem; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-ghost:hover {
+      background: var(--surface2);
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: .78rem;
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
 
     /* ── Stats cards ─────────────────────────────────────────────── */
     .stats-row {
@@ -195,27 +291,65 @@
       gap: 14px;
       padding: 24px 28px 0;
     }
+
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 16px;
     }
-    .stat-card .label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-    .stat-card .value { font-size: 1.8rem; font-weight: 700; line-height: 1.2; margin-top: 4px; }
-    .stat-card .sub   { font-size: .72rem; color: var(--muted); margin-top: 4px; }
-    .stat-card.accent .value { color: var(--accent-h); }
-    .stat-card.green  .value { color: var(--green); }
-    .stat-card.yellow .value { color: var(--yellow); }
-    .stat-card.red    .value { color: var(--red); }
+
+    .stat-card .label {
+      font-size: .72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-top: 4px;
+    }
+
+    .stat-card .sub {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .stat-card.accent .value {
+      color: var(--accent-h);
+    }
+
+    .stat-card.green .value {
+      color: var(--green);
+    }
+
+    .stat-card.yellow .value {
+      color: var(--yellow);
+    }
+
+    .stat-card.red .value {
+      color: var(--red);
+    }
 
     /* ── Filters bar ─────────────────────────────────────────────── */
     .filters {
-      display: flex; align-items: center; gap: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding: 18px 28px 12px;
       flex-wrap: wrap;
     }
-    .filter-label { font-size: .8rem; color: var(--muted); margin-right: 4px; }
+
+    .filter-label {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+
     .filter-chip {
       padding: 5px 12px;
       border-radius: 20px;
@@ -226,21 +360,54 @@
       cursor: pointer;
       transition: all .15s;
     }
-    .filter-chip:hover, .filter-chip.active {
+
+    .filter-chip:hover,
+    .filter-chip.active {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
     }
-    .filter-chip.source-upwork.active      { background: #14a800; border-color: #14a800; }
-    .filter-chip.source-reddit.active      { background: #ff4500; border-color: #ff4500; }
-    .filter-chip.source-google.active         { background: #eab308; border-color: #eab308; }
-    .filter-chip.source-weworkremotely.active { background: #8b5cf6; border-color: #8b5cf6; }
-    .filter-chip.source-freelancer.active     { background: #f97316; border-color: #f97316; }
-    .filter-chip.source-twitter.active     { background: #1d9bf0; border-color: #1d9bf0; }
-    .filter-chip.source-linkedin.active    { background: #0a66c2; border-color: #0a66c2; }
+
+    .filter-chip.source-upwork.active {
+      background: #14a800;
+      border-color: #14a800;
+    }
+
+    .filter-chip.source-reddit.active {
+      background: #ff4500;
+      border-color: #ff4500;
+    }
+
+    .filter-chip.source-google.active {
+      background: #eab308;
+      border-color: #eab308;
+    }
+
+    .filter-chip.source-weworkremotely.active {
+      background: #8b5cf6;
+      border-color: #8b5cf6;
+    }
+
+    .filter-chip.source-freelancer.active {
+      background: #f97316;
+      border-color: #f97316;
+    }
+
+    .filter-chip.source-twitter.active {
+      background: #1d9bf0;
+      border-color: #1d9bf0;
+    }
+
+    .filter-chip.source-linkedin.active {
+      background: #0a66c2;
+      border-color: #0a66c2;
+    }
 
     /* ── Leads table ─────────────────────────────────────────────── */
-    .leads-wrap { padding: 0 28px 40px; flex: 1; }
+    .leads-wrap {
+      padding: 0 28px 40px;
+      flex: 1;
+    }
 
     .table-wrap {
       background: var(--surface);
@@ -249,7 +416,11 @@
       overflow: hidden;
     }
 
-    table { width: 100%; border-collapse: collapse; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
     thead th {
       background: var(--surface2);
       padding: 10px 14px;
@@ -262,17 +433,31 @@
       border-bottom: 1px solid var(--border);
       white-space: nowrap;
     }
+
     tbody tr {
       border-bottom: 1px solid var(--border);
       transition: background .1s;
       cursor: pointer;
     }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: var(--surface2); }
-    tbody td { padding: 12px 14px; font-size: .85rem; vertical-align: middle; }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--surface2);
+    }
+
+    tbody td {
+      padding: 12px 14px;
+      font-size: .85rem;
+      vertical-align: middle;
+    }
 
     .source-badge {
-      display: inline-flex; align-items: center; gap: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       font-size: .7rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -280,13 +465,41 @@
       padding: 3px 8px;
       border-radius: 4px;
     }
-    .source-upwork      { background: rgba(20,168,0,.15);   color: #4ade80; }
-    .source-reddit      { background: rgba(255,69,0,.15);   color: #fb923c; }
-    .source-google         { background: rgba(234,179,8,.15);  color: #fbbf24; }
-    .source-weworkremotely { background: rgba(139,92,246,.15); color: #c4b5fd; }
-    .source-freelancer     { background: rgba(249,115,22,.15); color: #fb923c; }
-    .source-twitter     { background: rgba(29,155,240,.15); color: #60a5fa; }
-    .source-linkedin    { background: rgba(10,102,194,.15); color: #818cf8; }
+
+    .source-upwork {
+      background: rgba(20, 168, 0, .15);
+      color: #4ade80;
+    }
+
+    .source-reddit {
+      background: rgba(255, 69, 0, .15);
+      color: #fb923c;
+    }
+
+    .source-google {
+      background: rgba(234, 179, 8, .15);
+      color: #fbbf24;
+    }
+
+    .source-weworkremotely {
+      background: rgba(139, 92, 246, .15);
+      color: #c4b5fd;
+    }
+
+    .source-freelancer {
+      background: rgba(249, 115, 22, .15);
+      color: #fb923c;
+    }
+
+    .source-twitter {
+      background: rgba(29, 155, 240, .15);
+      color: #60a5fa;
+    }
+
+    .source-linkedin {
+      background: rgba(10, 102, 194, .15);
+      color: #818cf8;
+    }
 
     .status-badge {
       display: inline-block;
@@ -296,45 +509,114 @@
       border-radius: 20px;
       text-transform: capitalize;
     }
-    .status-new       { background: rgba(99,102,241,.2);   color: var(--accent-h); }
-    .status-sent      { background: rgba(59,130,246,.2);   color: #60a5fa; }
-    .status-won       { background: rgba(34,197,94,.2);    color: var(--green); }
-    .status-skipped   { background: rgba(100,116,139,.15); color: var(--muted); }
-    .status-qualified { background: rgba(34,197,94,.2);    color: var(--green); }
-    .status-skip      { background: rgba(239,68,68,.15);   color: #fca5a5; }
-    .status-built     { background: rgba(168,85,247,.2);   color: #d8b4fe; }
 
-    .title-cell { max-width: 320px; }
-    .title-cell .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .title-cell .meta  { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+    .status-new {
+      background: rgba(99, 102, 241, .2);
+      color: var(--accent-h);
+    }
+
+    .status-sent {
+      background: rgba(59, 130, 246, .2);
+      color: #60a5fa;
+    }
+
+    .status-won {
+      background: rgba(34, 197, 94, .2);
+      color: var(--green);
+    }
+
+    .status-skipped {
+      background: rgba(100, 116, 139, .15);
+      color: var(--muted);
+    }
+
+    .status-qualified {
+      background: rgba(34, 197, 94, .2);
+      color: var(--green);
+    }
+
+    .status-skip {
+      background: rgba(239, 68, 68, .15);
+      color: #fca5a5;
+    }
+
+    .status-built {
+      background: rgba(168, 85, 247, .2);
+      color: #d8b4fe;
+    }
+
+    .title-cell {
+      max-width: 320px;
+    }
+
+    .title-cell .title {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .title-cell .meta {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
 
     .urgency-dot {
       display: inline-block;
-      width: 7px; height: 7px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
     }
-    .urgency-high   { background: var(--red); box-shadow: 0 0 6px var(--red); }
-    .urgency-medium { background: var(--yellow); }
-    .urgency-low    { background: var(--green); }
-    .urgency-unknown { background: var(--muted); }
+
+    .urgency-high {
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red);
+    }
+
+    .urgency-medium {
+      background: var(--yellow);
+    }
+
+    .urgency-low {
+      background: var(--green);
+    }
+
+    .urgency-unknown {
+      background: var(--muted);
+    }
 
     .empty-state {
       text-align: center;
       padding: 60px 20px;
       color: var(--muted);
     }
-    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
-    .empty-state p { font-size: .9rem; }
+
+    .empty-state .icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-size: .9rem;
+    }
 
     /* ── Modal ───────────────────────────────────────────────────── */
     .modal-backdrop {
       display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.65);
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .65);
       z-index: 100;
       backdrop-filter: blur(4px);
     }
-    .modal-backdrop.open { display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; }
+
+    .modal-backdrop.open {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+    }
 
     .modal {
       background: var(--surface);
@@ -347,30 +629,70 @@
       box-shadow: var(--shadow);
       animation: slideUp .2s ease;
     }
+
     @keyframes slideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .modal-header {
-      display: flex; align-items: flex-start; gap: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
       padding: 20px 24px;
       border-bottom: 1px solid var(--border);
-      position: sticky; top: 0;
+      position: sticky;
+      top: 0;
       background: var(--surface);
     }
-    .modal-header .title-block { flex: 1; min-width: 0; }
-    .modal-header h2 { font-size: 1rem; font-weight: 600; line-height: 1.4; }
-    .modal-header .meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-    .modal-close {
-      background: none; border: none; color: var(--muted);
-      font-size: 1.2rem; cursor: pointer; flex-shrink: 0; padding: 2px;
+
+    .modal-header .title-block {
+      flex: 1;
+      min-width: 0;
     }
-    .modal-close:hover { color: var(--text); }
 
-    .modal-body { padding: 20px 24px; }
+    .modal-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
 
-    .section { margin-bottom: 22px; }
+    .modal-header .meta-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 2px;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+    }
+
+    .section {
+      margin-bottom: 22px;
+    }
+
     .section-title {
       font-size: .7rem;
       font-weight: 700;
@@ -378,9 +700,17 @@
       letter-spacing: .08em;
       color: var(--muted);
       margin-bottom: 10px;
-      display: flex; align-items: center; gap: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
 
     .desc-box {
       background: var(--surface2);
@@ -400,17 +730,36 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+
     .analysis-item {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 12px;
     }
-    .analysis-item .ai-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
-    .analysis-item .ai-value { font-size: .83rem; }
-    .analysis-item.full { grid-column: 1 / -1; }
 
-    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .analysis-item .ai-label {
+      font-size: .68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 4px;
+    }
+
+    .analysis-item .ai-value {
+      font-size: .83rem;
+    }
+
+    .analysis-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
     .tag {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -426,11 +775,16 @@
       border-radius: 10px;
       overflow: hidden;
     }
+
     .proposal-row {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
     }
-    .proposal-row:last-child { border-bottom: none; }
+
+    .proposal-row:last-child {
+      border-bottom: none;
+    }
+
     .proposal-row .p-label {
       font-size: .68rem;
       font-weight: 700;
@@ -438,13 +792,24 @@
       letter-spacing: .06em;
       color: var(--muted);
       margin-bottom: 6px;
-      display: flex; align-items: center; gap: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .proposal-row .p-value { font-size: .87rem; line-height: 1.65; }
 
-    .copy-btn-wrap { position: relative; }
+    .proposal-row .p-value {
+      font-size: .87rem;
+      line-height: 1.65;
+    }
+
+    .copy-btn-wrap {
+      position: relative;
+    }
+
     .copy-all-btn {
-      position: absolute; right: 0; top: -32px;
+      position: absolute;
+      right: 0;
+      top: -32px;
     }
 
     .modal-footer {
@@ -455,7 +820,13 @@
       gap: 8px;
       flex-wrap: wrap;
     }
-    .status-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .status-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
     .status-btn {
       padding: 6px 12px;
       border-radius: 6px;
@@ -467,43 +838,103 @@
       cursor: pointer;
       transition: all .15s;
     }
-    .status-btn:hover { border-color: var(--accent); color: var(--accent-h); }
-    .status-btn.active-status { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .status-btn[data-s="sent"]:hover    { border-color: var(--blue);   color: #60a5fa; }
-    .status-btn[data-s="won"]:hover     { border-color: var(--green);  color: var(--green); }
-    .status-btn[data-s="skipped"]:hover { border-color: var(--muted);  color: var(--muted); }
+
+    .status-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-h);
+    }
+
+    .status-btn.active-status {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .status-btn[data-s="sent"]:hover {
+      border-color: var(--blue);
+      color: #60a5fa;
+    }
+
+    .status-btn[data-s="won"]:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .status-btn[data-s="skipped"]:hover {
+      border-color: var(--muted);
+      color: var(--muted);
+    }
 
     /* ── Toast ───────────────────────────────────────────────────── */
     .toast-container {
-      position: fixed; bottom: 24px; right: 24px;
-      display: flex; flex-direction: column; gap: 8px;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       z-index: 200;
     }
+
     .toast {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 10px 16px;
       font-size: .83rem;
-      display: flex; align-items: center; gap: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       box-shadow: var(--shadow);
       animation: fadeInRight .25s ease;
     }
+
     @keyframes fadeInRight {
-      from { transform: translateX(20px); opacity: 0; }
-      to   { transform: translateX(0);    opacity: 1; }
+      from {
+        transform: translateX(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
-    .toast.success { border-color: var(--green); }
-    .toast.error   { border-color: var(--red);   }
+
+    .toast.success {
+      border-color: var(--green);
+    }
+
+    .toast.error {
+      border-color: var(--red);
+    }
 
     /* ── Scan spinner ────────────────────────────────────────────── */
-    .spin { animation: spin 1s linear infinite; display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin {
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     /* ── Scrollbar ───────────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
 
     /* ── Modal tabs ──────────────────────────────────────────────── */
     .modal-tabs {
@@ -514,6 +945,7 @@
       padding: 0 24px;
       overflow-x: auto;
     }
+
     .modal-tab {
       padding: 10px 16px;
       font-size: .82rem;
@@ -525,11 +957,24 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .modal-tab:hover { color: var(--text); }
-    .modal-tab.active { color: var(--accent-h); border-bottom-color: var(--accent); }
 
-    .tab-panel { display: none; padding-top: 20px; }
-    .tab-panel.active { display: block; }
+    .modal-tab:hover {
+      color: var(--text);
+    }
+
+    .modal-tab.active {
+      color: var(--accent-h);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel {
+      display: none;
+      padding-top: 20px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
 
     /* ── Qualify card ────────────────────────────────────────────── */
     .qualify-card {
@@ -538,13 +983,18 @@
       border-radius: 10px;
       overflow: hidden;
     }
+
     .qualify-row {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
       display: flex;
       gap: 16px;
     }
-    .qualify-row:last-child { border-bottom: none; }
+
+    .qualify-row:last-child {
+      border-bottom: none;
+    }
+
     .qualify-row .q-label {
       font-size: .68rem;
       font-weight: 700;
@@ -555,7 +1005,12 @@
       padding-top: 3px;
       flex-shrink: 0;
     }
-    .qualify-row .q-value { font-size: .87rem; line-height: 1.65; flex: 1; }
+
+    .qualify-row .q-value {
+      font-size: .87rem;
+      line-height: 1.65;
+      flex: 1;
+    }
 
     .price-grid {
       display: grid;
@@ -563,17 +1018,39 @@
       gap: 10px;
       margin-top: 4px;
     }
+
     .price-item {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 10px 14px;
     }
-    .price-item .p-sub  { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-    .price-item .p-amt  { font-size: 1.3rem; font-weight: 700; color: var(--green); margin-top: 2px; }
-    .price-item .p-note { font-size: .7rem; color: var(--muted); }
 
-    .confidence-bar-wrap { display: flex; align-items: center; gap: 10px; }
+    .price-item .p-sub {
+      font-size: .68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .price-item .p-amt {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-top: 2px;
+    }
+
+    .price-item .p-note {
+      font-size: .7rem;
+      color: var(--muted);
+    }
+
+    .confidence-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .confidence-bar {
       flex: 1;
       height: 6px;
@@ -581,331 +1058,356 @@
       border-radius: 3px;
       overflow: hidden;
     }
-    .confidence-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
-    .conf-high   { background: var(--green); }
-    .conf-medium { background: var(--yellow); }
-    .conf-low    { background: var(--red); }
+
+    .confidence-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .4s ease;
+    }
+
+    .conf-high {
+      background: var(--green);
+    }
+
+    .conf-medium {
+      background: var(--yellow);
+    }
+
+    .conf-low {
+      background: var(--red);
+    }
 
     /* ── Responsive ──────────────────────────────────────────────── */
     @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
-      .analysis-grid { grid-template-columns: 1fr; }
-      .modal { margin: 0; border-radius: 0; }
+      .sidebar {
+        display: none;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .analysis-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal {
+        margin: 0;
+        border-radius: 0;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<div class="layout">
+  <div class="layout">
 
-  <!-- ── Sidebar ───────────────────────────────────────────────── -->
-  <aside class="sidebar">
-    <div class="logo">
-      <div class="logo-icon">🦅</div>
-      <div>
-        <div class="logo-text">{{ agency_name if agency_name else 'Claw Agency' }}</div>
-        <div class="logo-sub">Engineering Intelligence</div>
-      </div>
-    </div>
-
-    <nav class="nav">
-      <div class="nav-label">Filter by status</div>
-      <div class="nav-item active" data-filter-status="" onclick="setStatusFilter(this, '')">
-        All Leads <span class="badge" id="badge-all">{{ stats.total }}</span>
-      </div>
-      <div class="nav-item" data-filter-status="new" onclick="setStatusFilter(this, 'new')">
-        New <span class="badge" id="badge-new">{{ stats.by_status.get('new', 0) }}</span>
-      </div>
-      <div class="nav-item" data-filter-status="sent" onclick="setStatusFilter(this, 'sent')">
-        Sent <span class="badge" id="badge-sent">{{ stats.by_status.get('sent', 0) }}</span>
-      </div>
-      <div class="nav-item" data-filter-status="won" onclick="setStatusFilter(this, 'won')">
-        Won <span class="badge" id="badge-won">{{ stats.by_status.get('won', 0) }}</span>
-      </div>
-      <div class="nav-item" data-filter-status="skipped" onclick="setStatusFilter(this, 'skipped')">
-        Skipped <span class="badge" id="badge-skipped">{{ stats.by_status.get('skipped', 0) }}</span>
+    <!-- ── Sidebar ───────────────────────────────────────────────── -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">🦅</div>
+        <div>
+          <div class="logo-text">{{ agency_name if agency_name else 'Claw Agency' }}</div>
+          <div class="logo-sub">Engineering Intelligence</div>
+        </div>
       </div>
 
-    </nav>
+      <nav class="nav">
+        <div class="nav-label">Filter by status</div>
+        <div class="nav-item active" data-filter-status="" onclick="setStatusFilter(this, '')">
+          All Leads <span class="badge" id="badge-all">{{ stats.total }}</span>
+        </div>
+        <div class="nav-item" data-filter-status="new" onclick="setStatusFilter(this, 'new')">
+          New <span class="badge" id="badge-new">{{ stats.by_status.get('new', 0) }}</span>
+        </div>
+        <div class="nav-item" data-filter-status="sent" onclick="setStatusFilter(this, 'sent')">
+          Sent <span class="badge" id="badge-sent">{{ stats.by_status.get('sent', 0) }}</span>
+        </div>
+        <div class="nav-item" data-filter-status="won" onclick="setStatusFilter(this, 'won')">
+          Won <span class="badge" id="badge-won">{{ stats.by_status.get('won', 0) }}</span>
+        </div>
+        <div class="nav-item" data-filter-status="skipped" onclick="setStatusFilter(this, 'skipped')">
+          Skipped <span class="badge" id="badge-skipped">{{ stats.by_status.get('skipped', 0) }}</span>
+        </div>
 
-    <div class="sidebar-footer">
-      <div>Keywords tracked:</div>
-      <div class="kw-tags">
-        {% for kw in keywords %}
-        <span class="kw-tag">{{ kw }}</span>
-        {% endfor %}
-      </div>
-      <div style="margin-top:10px;">Scan every {{ scan_interval }}h</div>
-    </div>
-  </aside>
+      </nav>
 
-  <!-- ── Main ──────────────────────────────────────────────────── -->
-  <div class="main">
+      <div class="sidebar-footer">
+        <div>Keywords tracked:</div>
+        <div class="kw-tags">
+          {% for kw in keywords %}
+          <span class="kw-tag">{{ kw }}</span>
+          {% endfor %}
+        </div>
+        <div style="margin-top:10px;">Scan every {{ scan_interval }}h</div>
+      </div>
+    </aside>
 
-    <!-- Topbar -->
-    <header class="topbar">
-      <h1>Lead Dashboard</h1>
-      <div class="search-wrap">
-        <span class="icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search leads…" oninput="filterTable()">
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="refreshLeads()">↻ Refresh</button>
-      <button class="btn btn-primary btn-sm" id="scanBtn" onclick="triggerScan()">
-        ⚡ Scan Now
-      </button>
-    </header>
+    <!-- ── Main ──────────────────────────────────────────────────── -->
+    <div class="main">
 
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card accent">
-        <div class="label">Total Leads</div>
-        <div class="value" id="stat-total">{{ stats.total }}</div>
-        <div class="sub">all time</div>
-      </div>
-      <div class="stat-card green">
-        <div class="label">Won</div>
-        <div class="value" id="stat-won">{{ stats.by_status.get('won', 0) }}</div>
-        <div class="sub">converted</div>
-      </div>
-      <div class="stat-card yellow">
-        <div class="label">Sent</div>
-        <div class="value" id="stat-sent">{{ stats.by_status.get('sent', 0) }}</div>
-        <div class="sub">proposals out</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Last 24h</div>
-        <div class="value" id="stat-24h">{{ stats.recent_24h }}</div>
-        <div class="sub">new leads</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Pending</div>
-        <div class="value" id="stat-new">{{ stats.by_status.get('new', 0) }}</div>
-        <div class="sub">to review</div>
-      </div>
-    </div>
+      <!-- Topbar -->
+      <header class="topbar">
+        <h1>Lead Dashboard</h1>
+        <div class="search-wrap">
+          <span class="icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search leads…" oninput="filterTable()">
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="refreshLeads()">↻ Refresh</button>
+        <button class="btn btn-primary btn-sm" id="scanBtn" onclick="triggerScan()">
+          ⚡ Scan Now
+        </button>
+      </header>
 
-    <!-- Filters -->
-    <div class="filters" style="padding-top:20px;">
-      <span class="filter-label">Source:</span>
-      <span class="filter-chip source-all active"      onclick="setSourceChip(this, '')">All</span>
-      <span class="filter-chip source-upwork"          onclick="setSourceChip(this, 'upwork')">Upwork</span>
-      <span class="filter-chip source-google"          onclick="setSourceChip(this, 'google')">Google</span>
-      <span class="filter-chip source-weworkremotely"  onclick="setSourceChip(this, 'weworkremotely')">WeWorkRemotely</span>
-      <span class="filter-chip source-freelancer"      onclick="setSourceChip(this, 'freelancer')">Freelancer</span>
-      <span class="filter-chip source-twitter"         onclick="setSourceChip(this, 'twitter')">Twitter/X</span>
-      <span class="filter-chip source-linkedin"        onclick="setSourceChip(this, 'linkedin')">LinkedIn</span>
-    </div>
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card accent">
+          <div class="label">Total Leads</div>
+          <div class="value" id="stat-total">{{ stats.total }}</div>
+          <div class="sub">all time</div>
+        </div>
+        <div class="stat-card green">
+          <div class="label">Won</div>
+          <div class="value" id="stat-won">{{ stats.by_status.get('won', 0) }}</div>
+          <div class="sub">converted</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="label">Sent</div>
+          <div class="value" id="stat-sent">{{ stats.by_status.get('sent', 0) }}</div>
+          <div class="sub">proposals out</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Last 24h</div>
+          <div class="value" id="stat-24h">{{ stats.recent_24h }}</div>
+          <div class="sub">new leads</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Pending</div>
+          <div class="value" id="stat-new">{{ stats.by_status.get('new', 0) }}</div>
+          <div class="sub">to review</div>
+        </div>
+      </div>
 
-    <!-- Table -->
-    <div class="leads-wrap">
-      <div class="table-wrap">
-        <table id="leadsTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Source</th>
-              <th>Lead</th>
-              <th>Urgency</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody id="leadsBody">
-            {% for lead in leads %}
-            {% set analysis = {} %}
-            {% if lead.analysis %}
+      <!-- Filters -->
+      <div class="filters" style="padding-top:20px;">
+        <span class="filter-label">Source:</span>
+        <span class="filter-chip source-all active" onclick="setSourceChip(this, '')">All</span>
+        <span class="filter-chip source-upwork" onclick="setSourceChip(this, 'upwork')">Upwork</span>
+        <span class="filter-chip source-google" onclick="setSourceChip(this, 'google')">Google</span>
+        <span class="filter-chip source-weworkremotely"
+          onclick="setSourceChip(this, 'weworkremotely')">WeWorkRemotely</span>
+        <span class="filter-chip source-freelancer" onclick="setSourceChip(this, 'freelancer')">Freelancer</span>
+        <span class="filter-chip source-twitter" onclick="setSourceChip(this, 'twitter')">Twitter/X</span>
+        <span class="filter-chip source-linkedin" onclick="setSourceChip(this, 'linkedin')">LinkedIn</span>
+      </div>
+
+      <!-- Table -->
+      <div class="leads-wrap">
+        <div class="table-wrap">
+          <table id="leadsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Source</th>
+                <th>Lead</th>
+                <th>Urgency</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="leadsBody">
+              {% for lead in leads %}
+              {% set analysis = {} %}
+              {% if lead.analysis %}
               {% set analysis = lead.analysis | fromjson %}
-            {% endif %}
-            <tr data-id="{{ lead.id }}"
-                data-source="{{ lead.source }}"
-                data-status="{{ lead.status }}"
-                data-title="{{ lead.title | lower }}"
-                onclick="openModal({{ lead.id }})">
-              <td style="color:var(--muted);font-size:.78rem;">{{ lead.id }}</td>
-              <td>
-                <span class="source-badge source-{{ lead.source }}">{{ lead.source }}</span>
-              </td>
-              <td class="title-cell">
-                <div class="title">{{ lead.title }}</div>
-                <div class="meta">
-                  {% if lead.author %}by {{ lead.author }} · {% endif %}
-                  {% if lead.keywords %}{{ lead.keywords }}{% endif %}
-                </div>
-              </td>
-              <td>
-                {% if analysis %}
+              {% endif %}
+              <tr data-id="{{ lead.id }}" data-source="{{ lead.source }}" data-status="{{ lead.status }}"
+                data-title="{{ lead.title | lower }}" onclick="openModal({{ lead.id }})">
+                <td style="color:var(--muted);font-size:.78rem;">{{ lead.id }}</td>
+                <td>
+                  <span class="source-badge source-{{ lead.source }}">{{ lead.source }}</span>
+                </td>
+                <td class="title-cell">
+                  <div class="title">{{ lead.title }}</div>
+                  <div class="meta">
+                    {% if lead.author %}by {{ lead.author }} · {% endif %}
+                    {% if lead.keywords %}{{ lead.keywords }}{% endif %}
+                  </div>
+                </td>
+                <td>
+                  {% if analysis %}
                   {% set u = analysis.get('urgency', 'unknown') %}
                   <span class="urgency-dot urgency-{{ u }}" title="{{ u }}"></span>
                   <span style="font-size:.75rem;color:var(--muted);margin-left:4px;">{{ u }}</span>
-                {% else %}
+                  {% else %}
                   <span style="color:var(--muted);font-size:.78rem;">—</span>
-                {% endif %}
-              </td>
-              <td>
-                <span class="status-badge status-{{ lead.status }}">{{ lead.status }}</span>
-              </td>
-              <td style="color:var(--muted);font-size:.78rem;white-space:nowrap;">
-                {{ lead.created_at[:10] }}
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="6">
-                <div class="empty-state">
-                  <div class="icon">🔭</div>
-                  <p>No leads yet. Click <strong>Scan Now</strong> to start hunting.</p>
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="status-badge status-{{ lead.status }}">{{ lead.status }}</span>
+                </td>
+                <td style="color:var(--muted);font-size:.78rem;white-space:nowrap;">
+                  {{ lead.created_at[:10] }}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">
+                    <div class="icon">🔭</div>
+                    <p>No leads yet. Click <strong>Scan Now</strong> to start hunting.</p>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-  </div><!-- /.main -->
-</div><!-- /.layout -->
+    </div><!-- /.main -->
+  </div><!-- /.layout -->
 
-<!-- ── Modal ─────────────────────────────────────────────────────── -->
-<div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
-  <div class="modal" id="modal">
-    <div class="modal-header">
-      <div class="title-block">
-        <h2 id="modalTitle">Loading…</h2>
-        <div class="meta-row" id="modalMeta"></div>
+  <!-- ── Modal ─────────────────────────────────────────────────────── -->
+  <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <div class="title-block">
+          <h2 id="modalTitle">Loading…</h2>
+          <div class="meta-row" id="modalMeta"></div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-body" id="modalBody">
+        <p style="color:var(--muted);text-align:center;padding:40px 0;">Loading lead details…</p>
+      </div>
+      <div class="modal-footer" id="modalFooter"></div>
     </div>
-    <div class="modal-body" id="modalBody">
-      <p style="color:var(--muted);text-align:center;padding:40px 0;">Loading lead details…</p>
-    </div>
-    <div class="modal-footer" id="modalFooter"></div>
   </div>
-</div>
 
-<!-- ── Toast container ────────────────────────────────────────────── -->
-<div class="toast-container" id="toastContainer"></div>
+  <!-- ── Toast container ────────────────────────────────────────────── -->
+  <div class="toast-container" id="toastContainer"></div>
 
-<script>
-// ── State ─────────────────────────────────────────────────────────
-let currentStatusFilter = '';
-let currentSourceFilter = '';
-let currentLeadId = null;
+  <script>
+    // ── State ─────────────────────────────────────────────────────────
+    let currentStatusFilter = '';
+    let currentSourceFilter = '';
+    let currentLeadId = null;
 
-// ── Filter table ──────────────────────────────────────────────────
-function filterTable() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const rows = document.querySelectorAll('#leadsBody tr[data-id]');
-  rows.forEach(row => {
-    const title  = row.dataset.title || '';
-    const source = row.dataset.source || '';
-    const status = row.dataset.status || '';
-    const matchQ = !q || title.includes(q);
-    const matchStatus = !currentStatusFilter || status === currentStatusFilter;
-    const matchSource = !currentSourceFilter || source === currentSourceFilter;
-    row.style.display = (matchQ && matchStatus && matchSource) ? '' : 'none';
-  });
-}
+    // ── Filter table ──────────────────────────────────────────────────
+    function filterTable() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#leadsBody tr[data-id]');
+      rows.forEach(row => {
+        const title = row.dataset.title || '';
+        const source = row.dataset.source || '';
+        const status = row.dataset.status || '';
+        const matchQ = !q || title.includes(q);
+        const matchStatus = !currentStatusFilter || status === currentStatusFilter;
+        const matchSource = !currentSourceFilter || source === currentSourceFilter;
+        row.style.display = (matchQ && matchStatus && matchSource) ? '' : 'none';
+      });
+    }
 
-function setStatusFilter(el, status) {
-  currentStatusFilter = status;
-  document.querySelectorAll('.nav-item[data-filter-status]').forEach(n => n.classList.remove('active'));
-  el.classList.add('active');
-  filterTable();
-}
+    function setStatusFilter(el, status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.nav-item[data-filter-status]').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+      filterTable();
+    }
 
-function setSourceFilter(el, source) {
-  currentSourceFilter = source;
-  document.querySelectorAll('.nav-item[data-filter-source]').forEach(n => n.classList.remove('active'));
-  el.classList.add('active');
-  // Also sync chips
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  const chip = document.querySelector(`.filter-chip.source-${source || 'all'}`);
-  if (chip) chip.classList.add('active');
-  filterTable();
-}
+    function setSourceFilter(el, source) {
+      currentSourceFilter = source;
+      document.querySelectorAll('.nav-item[data-filter-source]').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+      // Also sync chips
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      const chip = document.querySelector(`.filter-chip.source-${source || 'all'}`);
+      if (chip) chip.classList.add('active');
+      filterTable();
+    }
 
-function setSourceChip(el, source) {
-  currentSourceFilter = source;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  // sync sidebar
-  document.querySelectorAll('.nav-item[data-filter-source]').forEach(n => n.classList.remove('active'));
-  if (source) {
-    const nav = document.querySelector(`.nav-item[data-filter-source="${source}"]`);
-    if (nav) nav.classList.add('active');
-  }
-  filterTable();
-}
+    function setSourceChip(el, source) {
+      currentSourceFilter = source;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      // sync sidebar
+      document.querySelectorAll('.nav-item[data-filter-source]').forEach(n => n.classList.remove('active'));
+      if (source) {
+        const nav = document.querySelector(`.nav-item[data-filter-source="${source}"]`);
+        if (nav) nav.classList.add('active');
+      }
+      filterTable();
+    }
 
-// ── Proposal text builder ─────────────────────────────────────────
-function buildProposalText(p) {
-  if (!p || p.error) return 'Proposal not available.';
-  return [
-    p.hook        ? `HOOK:\n${p.hook}` : '',
-    p.solution    ? `\nSOLUTION:\n${p.solution}` : '',
-    p.tech_stack  ? `\nTECH STACK: ${p.tech_stack}` : '',
-    p.timeline    ? `TIMELINE: ${p.timeline}` : '',
-    p.closing_question ? `\n${p.closing_question}` : '',
-    p.upsell      ? `\nUPSELL: ${p.upsell}` : '',
-  ].filter(Boolean).join('\n');
-}
+    // ── Proposal text builder ─────────────────────────────────────────
+    function buildProposalText(p) {
+      if (!p || p.error) return 'Proposal not available.';
+      return [
+        p.hook ? `HOOK:\n${p.hook}` : '',
+        p.solution ? `\nSOLUTION:\n${p.solution}` : '',
+        p.tech_stack ? `\nTECH STACK: ${p.tech_stack}` : '',
+        p.timeline ? `TIMELINE: ${p.timeline}` : '',
+        p.closing_question ? `\n${p.closing_question}` : '',
+        p.upsell ? `\nUPSELL: ${p.upsell}` : '',
+      ].filter(Boolean).join('\n');
+    }
 
-// ── Modal ─────────────────────────────────────────────────────────
-async function openModal(id) {
-  currentLeadId = id;
-  document.getElementById('modalBackdrop').classList.add('open');
-  document.getElementById('modalTitle').textContent = 'Loading…';
-  document.getElementById('modalMeta').innerHTML = '';
-  document.getElementById('modalBody').innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px 0;">⏳ Fetching lead…</p>';
-  document.getElementById('modalFooter').innerHTML = '';
+    // ── Modal ─────────────────────────────────────────────────────────
+    async function openModal(id) {
+      currentLeadId = id;
+      document.getElementById('modalBackdrop').classList.add('open');
+      document.getElementById('modalTitle').textContent = 'Loading…';
+      document.getElementById('modalMeta').innerHTML = '';
+      document.getElementById('modalBody').innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px 0;">⏳ Fetching lead…</p>';
+      document.getElementById('modalFooter').innerHTML = '';
 
-  try {
-    const res = await fetch(`/api/leads/${id}`);
-    const lead = await res.json();
-    renderModal(lead);
-  } catch (e) {
-    document.getElementById('modalBody').innerHTML = `<p style="color:var(--red);">Error: ${e.message}</p>`;
-  }
-}
+      try {
+        const res = await fetch(`/api/leads/${id}`);
+        const lead = await res.json();
+        renderModal(lead);
+      } catch (e) {
+        document.getElementById('modalBody').innerHTML = `<p style="color:var(--red);">Error: ${e.message}</p>`;
+      }
+    }
 
-// ── Tab switching ──────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  const tab = document.querySelector(`.modal-tab[data-tab="${name}"]`);
-  if (tab) tab.classList.add('active');
-  const panel = document.getElementById(`tab-${name}`);
-  if (panel) panel.classList.add('active');
-}
+    // ── Tab switching ──────────────────────────────────────────────
+    function switchTab(name) {
+      document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      const tab = document.querySelector(`.modal-tab[data-tab="${name}"]`);
+      if (tab) tab.classList.add('active');
+      const panel = document.getElementById(`tab-${name}`);
+      if (panel) panel.classList.add('active');
+    }
 
-function renderModal(lead) {
-  const analysis = lead.analysis || {};
-  const proposal = lead.proposal || {};
-  const qual     = lead.qualification || {};
+    function renderModal(lead) {
+      const analysis = lead.analysis || {};
+      const proposal = lead.proposal || {};
+      const qual = lead.qualification || {};
 
-  document.getElementById('modalTitle').textContent = lead.title;
-  document.getElementById('modalMeta').innerHTML = `
+      document.getElementById('modalTitle').textContent = lead.title;
+      document.getElementById('modalMeta').innerHTML = `
     <span class="source-badge source-${lead.source}">${escHtml(lead.source)}</span>
     <span class="status-badge status-${lead.status}" id="metaStatusBadge">${escHtml(lead.status)}</span>
     ${lead.author ? `<span style="font-size:.75rem;color:var(--muted);">by ${escHtml(lead.author)}</span>` : ''}
-    ${lead.posted_at ? `<span style="font-size:.75rem;color:var(--muted);">${lead.posted_at.slice(0,10)}</span>` : ''}
+    ${lead.posted_at ? `<span style="font-size:.75rem;color:var(--muted);">${lead.posted_at.slice(0, 10)}</span>` : ''}
     <a href="${lead.url}" target="_blank" style="font-size:.75rem;">↗ View original</a>
   `;
 
-  // ── Analysis tab content ───────────────────────────────────────
-  let painPoints = '';
-  if (analysis.pain_points?.length) {
-    painPoints = `<div class="tags">${analysis.pain_points.map(p => `<span class="tag">⚡ ${escHtml(p)}</span>`).join('')}</div>`;
-  }
-  let techHints = '';
-  if (analysis.tech_hints?.length) {
-    techHints = `<div class="tags" style="margin-top:6px;">${analysis.tech_hints.map(t => `<span class="tag" style="color:var(--cyan);">⚙ ${escHtml(t)}</span>`).join('')}</div>`;
-  }
-  const urgencyClass = `urgency-${analysis.urgency || 'unknown'}`;
+      // ── Analysis tab content ───────────────────────────────────────
+      let painPoints = '';
+      if (analysis.pain_points?.length) {
+        painPoints = `<div class="tags">${analysis.pain_points.map(p => `<span class="tag">⚡ ${escHtml(p)}</span>`).join('')}</div>`;
+      }
+      let techHints = '';
+      if (analysis.tech_hints?.length) {
+        techHints = `<div class="tags" style="margin-top:6px;">${analysis.tech_hints.map(t => `<span class="tag" style="color:var(--cyan);">⚙ ${escHtml(t)}</span>`).join('')}</div>`;
+      }
+      const urgencyClass = `urgency-${analysis.urgency || 'unknown'}`;
 
-  const analysisHtml = analysis && !analysis.error ? `
+      const analysisHtml = analysis && !analysis.error ? `
     <div class="analysis-grid">
       <div class="analysis-item">
         <div class="ai-label">Project type</div>
@@ -934,9 +1436,9 @@ function renderModal(lead) {
     </div>
   ` : `<p style="color:var(--muted);">No analysis generated yet.</p>`;
 
-  // ── Proposal tab content ───────────────────────────────────────
-  const proposalText = buildProposalText(proposal);
-  const proposalHtml = proposal && !proposal.error ? `
+      // ── Proposal tab content ───────────────────────────────────────
+      const proposalText = buildProposalText(proposal);
+      const proposalHtml = proposal && !proposal.error ? `
     <div class="copy-btn-wrap">
       <button class="btn btn-ghost btn-sm copy-all-btn" onclick="copyAll(${lead.id})">📋 Copy full proposal</button>
     </div>
@@ -950,12 +1452,12 @@ function renderModal(lead) {
     </div>
   ` : `<p style="color:var(--muted);">No proposal generated yet.</p>`;
 
-  // ── Quote tab content ──────────────────────────────────────────
-  const confidence = qual.confidence || 0;
-  const confClass  = confidence >= 7 ? 'conf-high' : confidence >= 5 ? 'conf-medium' : 'conf-low';
-  const confWidth  = `${confidence * 10}%`;
+      // ── Quote tab content ──────────────────────────────────────────
+      const confidence = qual.confidence || 0;
+      const confClass = confidence >= 7 ? 'conf-high' : confidence >= 5 ? 'conf-medium' : 'conf-low';
+      const confWidth = `${confidence * 10}%`;
 
-  const quoteHtml = qual && !qual.error && qual.problem_summary ? `
+      const quoteHtml = qual && !qual.error && qual.problem_summary ? `
     <div class="qualify-card">
       <div class="qualify-row">
         <div class="q-label">Problem</div>
@@ -1009,8 +1511,8 @@ function renderModal(lead) {
     </div>
   `;
 
-  // ── Build modal body ───────────────────────────────────────────
-  document.getElementById('modalBody').innerHTML = `
+      // ── Build modal body ───────────────────────────────────────────
+      document.getElementById('modalBody').innerHTML = `
     <div class="modal-tabs">
       <div class="modal-tab active" data-tab="overview"  onclick="switchTab('overview')">📋 Overview</div>
       <div class="modal-tab"        data-tab="analysis"  onclick="switchTab('analysis')">🤖 Analysis</div>
@@ -1047,10 +1549,10 @@ function renderModal(lead) {
     </div>
   `;
 
-  // ── Footer ─────────────────────────────────────────────────────
-  const statuses = ['new', 'sent', 'won', 'skipped'];
-  const statusLabels = { new: '🔵 New', sent: '✉️ Sent', won: '🏆 Won', skipped: '⏭ Skip' };
-  const statusBtns = statuses.map(s => `
+      // ── Footer ─────────────────────────────────────────────────────
+      const statuses = ['new', 'sent', 'won', 'skipped'];
+      const statusLabels = { new: '🔵 New', sent: '✉️ Sent', won: '🏆 Won', skipped: '⏭ Skip' };
+      const statusBtns = statuses.map(s => `
     <button class="status-btn ${lead.status === s ? 'active-status' : ''}"
             data-s="${s}" id="sbtn-${s}"
             onclick="setStatus(${lead.id}, '${s}')">
@@ -1058,14 +1560,14 @@ function renderModal(lead) {
     </button>
   `).join('');
 
-  const buildBtn     = lead.status === 'qualified'
-    ? `<button class="btn btn-primary btn-sm" id="buildBtn" onclick="buildLead(${lead.id})">🔨 Build</button>`
-    : '';
-  const downloadBtn  = lead.status === 'built' && lead.deliverable_path
-    ? `<a class="btn btn-ghost btn-sm" href="/api/leads/${lead.id}/download">⬇️ Download</a>`
-    : '';
+      const buildBtn = lead.status === 'qualified'
+        ? `<button class="btn btn-primary btn-sm" id="buildBtn" onclick="buildLead(${lead.id})">🔨 Build</button>`
+        : '';
+      const downloadBtn = lead.status === 'built' && lead.deliverable_path
+        ? `<a class="btn btn-ghost btn-sm" href="/api/leads/${lead.id}/download">⬇️ Download</a>`
+        : '';
 
-  document.getElementById('modalFooter').innerHTML = `
+      document.getElementById('modalFooter').innerHTML = `
     <div class="status-actions">${statusBtns}</div>
     <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="qualifyLead(${lead.id})">🎯 Qualify</button>
     ${buildBtn}
@@ -1073,189 +1575,190 @@ function renderModal(lead) {
     <button class="btn btn-ghost btn-sm" onclick="copyAll(${lead.id})">📋 Copy Proposal</button>
   `;
 
-  // Store proposal text for copy
-  window.__currentProposal = proposalText;
-  window.__currentLead = lead;
-}
-
-function closeModal(e) {
-  if (e && e.target !== document.getElementById('modalBackdrop')) return;
-  document.getElementById('modalBackdrop').classList.remove('open');
-  currentLeadId = null;
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
-
-// ── Copy proposal ─────────────────────────────────────────────────
-async function copyAll(id) {
-  const text = window.__currentProposal || '';
-  if (!text) { toast('No proposal to copy', 'error'); return; }
-  try {
-    await navigator.clipboard.writeText(text);
-    toast('Proposal copied to clipboard!', 'success');
-  } catch {
-    // fallback
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    toast('Proposal copied!', 'success');
-  }
-}
-
-// ── Qualify lead ──────────────────────────────────────────────────
-async function qualifyLead(id) {
-  const btn = event?.target;
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Qualifying…'; }
-  try {
-    const res = await fetch(`/api/leads/${id}/qualify`, { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
-      toast('Lead qualified!', 'success');
-      // Reload modal to show new qualification data
-      const res2 = await fetch(`/api/leads/${id}`);
-      const lead = await res2.json();
-      renderModal(lead);
-      switchTab('quote');
-      refreshStats();
-    } else {
-      toast(`Qualify error: ${data.error}`, 'error');
-      if (btn) { btn.disabled = false; btn.textContent = 'Run Qualifier'; }
+      // Store proposal text for copy
+      window.__currentProposal = proposalText;
+      window.__currentLead = lead;
     }
-  } catch (e) {
-    toast(`Error: ${e.message}`, 'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'Run Qualifier'; }
-  }
-}
 
-// ── Build lead ────────────────────────────────────────────────────
-async function buildLead(id) {
-  const btn = document.getElementById('buildBtn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin">🔨</span> Building…'; }
-  toast('Building project — this may take up to 30 seconds…', 'success');
-  try {
-    const res = await fetch(`/api/leads/${id}/build`, { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
-      toast('Build complete! ZIP is ready.', 'success');
-      const res2 = await fetch(`/api/leads/${id}`);
-      const lead = await res2.json();
-      renderModal(lead);
-      // Trigger download automatically
-      setTimeout(() => { window.location.href = `/api/leads/${id}/download`; }, 400);
-      refreshStats();
-    } else {
-      toast(`Build error: ${data.error}`, 'error');
-      if (btn) { btn.disabled = false; btn.innerHTML = '🔨 Build'; }
+    function closeModal(e) {
+      if (e && e.target !== document.getElementById('modalBackdrop')) return;
+      document.getElementById('modalBackdrop').classList.remove('open');
+      currentLeadId = null;
     }
-  } catch (e) {
-    toast(`Error: ${e.message}`, 'error');
-    if (btn) { btn.disabled = false; btn.innerHTML = '🔨 Build'; }
-  }
-}
 
-// ── Update status ─────────────────────────────────────────────────
-async function setStatus(id, status) {
-  try {
-    const res = await fetch(`/api/leads/${id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
     });
-    const data = await res.json();
-    if (data.ok) {
-      toast(`Status → ${status}`, 'success');
-      // Update badges
-      document.querySelectorAll(`[data-s]`).forEach(b => b.classList.remove('active-status'));
-      const btn = document.getElementById(`sbtn-${status}`);
-      if (btn) btn.classList.add('active-status');
-      // Update row in table
-      const row = document.querySelector(`tr[data-id="${id}"]`);
-      if (row) {
-        row.dataset.status = status;
-        const badge = row.querySelector('.status-badge');
-        if (badge) {
-          badge.className = `status-badge status-${status}`;
-          badge.textContent = status;
+
+    // ── Copy proposal ─────────────────────────────────────────────────
+    async function copyAll(id) {
+      const text = window.__currentProposal || '';
+      if (!text) { toast('No proposal to copy', 'error'); return; }
+      try {
+        await navigator.clipboard.writeText(text);
+        toast('Proposal copied to clipboard!', 'success');
+      } catch {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('Proposal copied!', 'success');
+      }
+    }
+
+    // ── Qualify lead ──────────────────────────────────────────────────
+    async function qualifyLead(id) {
+      const btn = event?.target;
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Qualifying…'; }
+      try {
+        const res = await fetch(`/api/leads/${id}/qualify`, { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          toast('Lead qualified!', 'success');
+          // Reload modal to show new qualification data
+          const res2 = await fetch(`/api/leads/${id}`);
+          const lead = await res2.json();
+          renderModal(lead);
+          switchTab('quote');
+          refreshStats();
+        } else {
+          toast(`Qualify error: ${data.error}`, 'error');
+          if (btn) { btn.disabled = false; btn.textContent = 'Run Qualifier'; }
         }
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Run Qualifier'; }
       }
-      // Update modal meta badge
-      const metaBadge = document.getElementById('metaStatusBadge');
-      if (metaBadge) {
-        metaBadge.className = `status-badge status-${status}`;
-        metaBadge.textContent = status;
+    }
+
+    // ── Build lead ────────────────────────────────────────────────────
+    async function buildLead(id) {
+      const btn = document.getElementById('buildBtn');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin">🔨</span> Building…'; }
+      toast('Building project — this may take up to 30 seconds…', 'success');
+      try {
+        const res = await fetch(`/api/leads/${id}/build`, { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          toast('Build complete! ZIP is ready.', 'success');
+          const res2 = await fetch(`/api/leads/${id}`);
+          const lead = await res2.json();
+          renderModal(lead);
+          // Trigger download automatically
+          setTimeout(() => { window.location.href = `/api/leads/${id}/download`; }, 400);
+          refreshStats();
+        } else {
+          toast(`Build error: ${data.error}`, 'error');
+          if (btn) { btn.disabled = false; btn.innerHTML = '🔨 Build'; }
+        }
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '🔨 Build'; }
       }
-      refreshStats();
     }
-  } catch (e) {
-    toast(`Error: ${e.message}`, 'error');
-  }
-}
 
-// ── Scan ──────────────────────────────────────────────────────────
-async function triggerScan() {
-  const btn = document.getElementById('scanBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin">⚡</span> Scanning…';
-  try {
-    const res = await fetch('/api/scan', { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
-      toast(`Scan complete — ${data.new_leads} new leads found`, 'success');
-      setTimeout(() => location.reload(), 1500);
-    } else {
-      toast(`Scan error: ${data.error}`, 'error');
+    // ── Update status ─────────────────────────────────────────────────
+    async function setStatus(id, status) {
+      try {
+        const res = await fetch(`/api/leads/${id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          toast(`Status → ${status}`, 'success');
+          // Update badges
+          document.querySelectorAll(`[data-s]`).forEach(b => b.classList.remove('active-status'));
+          const btn = document.getElementById(`sbtn-${status}`);
+          if (btn) btn.classList.add('active-status');
+          // Update row in table
+          const row = document.querySelector(`tr[data-id="${id}"]`);
+          if (row) {
+            row.dataset.status = status;
+            const badge = row.querySelector('.status-badge');
+            if (badge) {
+              badge.className = `status-badge status-${status}`;
+              badge.textContent = status;
+            }
+          }
+          // Update modal meta badge
+          const metaBadge = document.getElementById('metaStatusBadge');
+          if (metaBadge) {
+            metaBadge.className = `status-badge status-${status}`;
+            metaBadge.textContent = status;
+          }
+          refreshStats();
+        }
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+      }
     }
-  } catch (e) {
-    toast(`Error: ${e.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '⚡ Scan Now';
-  }
-}
 
-// ── Refresh ───────────────────────────────────────────────────────
-function refreshLeads() { location.reload(); }
+    // ── Scan ──────────────────────────────────────────────────────────
+    async function triggerScan() {
+      const btn = document.getElementById('scanBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spin">⚡</span> Scanning…';
+      try {
+        const res = await fetch('/api/scan', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          toast(`Scan complete — ${data.new_leads} new leads found`, 'success');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          toast(`Scan error: ${data.error}`, 'error');
+        }
+      } catch (e) {
+        toast(`Error: ${e.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '⚡ Scan Now';
+      }
+    }
 
-async function refreshStats() {
-  try {
-    const res = await fetch('/api/stats');
-    const s = await res.json();
-    document.getElementById('stat-total').textContent = s.total;
-    document.getElementById('stat-won').textContent   = s.by_status?.won    || 0;
-    document.getElementById('stat-sent').textContent  = s.by_status?.sent   || 0;
-    document.getElementById('stat-24h').textContent   = s.recent_24h;
-    document.getElementById('stat-new').textContent   = s.by_status?.new    || 0;
-    document.getElementById('badge-all').textContent  = s.total;
-    document.getElementById('badge-new').textContent  = s.by_status?.new    || 0;
-    document.getElementById('badge-sent').textContent = s.by_status?.sent   || 0;
-    document.getElementById('badge-won').textContent  = s.by_status?.won    || 0;
-    document.getElementById('badge-skipped').textContent = s.by_status?.skipped || 0;
-  } catch {}
-}
+    // ── Refresh ───────────────────────────────────────────────────────
+    function refreshLeads() { location.reload(); }
 
-// ── Toast ─────────────────────────────────────────────────────────
-function toast(msg, type = 'success') {
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> ${escHtml(msg)}`;
-  document.getElementById('toastContainer').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
+    async function refreshStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const s = await res.json();
+        document.getElementById('stat-total').textContent = s.total;
+        document.getElementById('stat-won').textContent = s.by_status?.won || 0;
+        document.getElementById('stat-sent').textContent = s.by_status?.sent || 0;
+        document.getElementById('stat-24h').textContent = s.recent_24h;
+        document.getElementById('stat-new').textContent = s.by_status?.new || 0;
+        document.getElementById('badge-all').textContent = s.total;
+        document.getElementById('badge-new').textContent = s.by_status?.new || 0;
+        document.getElementById('badge-sent').textContent = s.by_status?.sent || 0;
+        document.getElementById('badge-won').textContent = s.by_status?.won || 0;
+        document.getElementById('badge-skipped').textContent = s.by_status?.skipped || 0;
+      } catch { }
+    }
 
-// ── Helpers ───────────────────────────────────────────────────────
-function escHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-</script>
+    // ── Toast ─────────────────────────────────────────────────────────
+    function toast(msg, type = 'success') {
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> ${escHtml(msg)}`;
+      document.getElementById('toastContainer').appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
 
 </body>
+
 </html>
