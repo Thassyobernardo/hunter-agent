@@ -260,7 +260,12 @@ def api_download_lead(lead_id):
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "agent": "claw", "time": datetime.utcnow().isoformat()})
+    return jsonify({
+        "status": "ok",
+        "agent": "claw",
+        "version": "1.0.1-claw-b2b",
+        "time": datetime.utcnow().isoformat()
+    })
 
 @app.route("/run-now")
 def run_now_alias():
