@@ -3,6 +3,7 @@ Google Maps scraper via Apify Actor (jan.mraz/google-maps-scraper).
 Targets local businesses like dental clinics and real estate agencies in Luxembourg.
 """
 import os
+import time
 import logging
 import config
 from apify_client import ApifyClient
@@ -11,7 +12,7 @@ from database import save_lead, log_action
 log = logging.getLogger(__name__)
 
 SOURCE = "google_maps"
-ACTOR = "jan.mraz/google-maps-scraper"
+ACTOR = "compass/crawler-google-places"
 
 def _get_client() -> ApifyClient:
     token = os.getenv("APIFY_TOKEN")
@@ -75,6 +76,9 @@ def scrape(queries: list[str] = None, max_results: int = 10) -> int:
 
         except Exception as e:
             log.error(f"[GoogleMaps] Actor run failed for '{query}': {e}")
+        
+        # Delay to avoid hammering the API
+        time.sleep(2)
 
     if saved > 0:
         log_action("google_maps_scan", f"Found {saved} leads for {search_queries}")

@@ -1,9 +1,10 @@
 """
-LinkedIn scraper via Apify Actor (linkedin-jobs-scraper).
+LinkedIn scraper via Apify Actor (curious_coder/linkedin-company-scraper).
 Targets dental clinics and real estate opportunities in Luxembourg.
 """
 import os
 import requests
+import time
 import logging
 from database import save_lead, log_action
 import config
@@ -11,7 +12,7 @@ import config
 log = logging.getLogger(__name__)
 
 SOURCE = "linkedin"
-APIFY_ACTOR = "bebity/linkedin-jobs-scraper"
+APIFY_ACTOR = "curious_coder/linkedin-company-scraper"
 APIFY_BASE = "https://api.apify.com/v2"
 
 def _run_actor(keyword: str, location: str, max_items: int = 10) -> list[dict]:
@@ -55,9 +56,9 @@ def scrape(keywords: list[str] = None, max_per_keyword: int = 10) -> int:
         jobs = _run_actor(kw, location, max_per_keyword)
 
         for job in jobs:
-            title = job.get("title", "No title")
-            company = job.get("companyName", "Unknown")
-            url = job.get("jobUrl") or job.get("url", "")
+            title = job.get("title") or job.get("jobTitle") or "No title"
+            company = job.get("companyName") or job.get("company") or "Unknown"
+            url = job.get("jobUrl") or job.get("url") or ""
             
             if not url:
                 continue
@@ -69,14 +70,17 @@ def scrape(keywords: list[str] = None, max_per_keyword: int = 10) -> int:
                 phone="N/A",
                 sector=kw,
                 location=location,
-                score=70, # Higher score for LinkedIn jobs
+                score=70, # Higher score for LinkedIn results
                 source=SOURCE,
-                notes=f"Job Title: {title}. Link: {url}"
+                notes=f"Title: {title}. Link: {url}"
             )
 
             if success:
                 saved += 1
                 log.info(f"[LinkedIn] Saved lead from {company}: {title[:60]}")
+        
+        # Delay to avoid hammering the API
+        time.sleep(2)
 
     if saved > 0:
         log_action("linkedin_scan", f"Found {saved} leads in Luxembourg")
