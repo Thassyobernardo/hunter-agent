@@ -85,6 +85,33 @@ def get_leads(limit=50):
         log.error(f"get_leads error: {e}")
         return []
 
+def get_outreach_leads():
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT * FROM leads 
+                WHERE status = 'novo' AND email != 'N/A' AND email IS NOT NULL
+                ORDER BY created_at DESC
+            """))
+            rows = result.fetchall()
+            return [dict(r._mapping) for r in rows]
+    except Exception as e:
+        log.error(f"get_outreach_leads error: {e}")
+        return []
+
+def update_status(lead_id, status):
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            conn.execute(text("UPDATE leads SET status = :status WHERE id = :id"),
+                        {"status": status, "id": lead_id})
+            conn.commit()
+        return True
+    except Exception as e:
+        log.error(f"update_status error: {e}")
+        return False
+
 def save_lead(name, email, phone, sector, location, score, source, notes=""):
     try:
         engine = get_engine()
@@ -112,3 +139,15 @@ def log_action(action, details=""):
             conn.commit()
     except Exception as e:
         log.error(f"log_action error: {e}")
+
+def log_email_sent(lead_id, subject, body=""):
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            conn.execute(text("""
+                INSERT INTO emails_sent (lead_id, subject, body)
+                VALUES (:lead_id, :subject, :body)
+            """), {"lead_id": lead_id, "subject": subject, "body": body})
+            conn.commit()
+    except Exception as e:
+        log.error(f"log_email_sent error: {e}")

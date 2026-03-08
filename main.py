@@ -31,7 +31,7 @@ def index():
         "agent": "Claw Agency",
         "version": "1.0.2",
         "status": "running",
-        "endpoints": ["/health", "/dashboard", "/test-telegram", "/run-now"]
+        "endpoints": ["/health", "/dashboard", "/test-telegram", "/run-now", "/send-outreach"]
     }), 200
 
 @app.route("/dashboard")
@@ -110,6 +110,7 @@ def dashboard():
             </div>
             <div style="display:flex; gap:12px; margin-top:24px;">
                 <a href="/run-now" style="background:#7c3aed; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">▶ Run Scan Now</a>
+                <a href="/send-outreach" style="background:#22c55e; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">📧 Send Outreach</a>
                 <a href="/test-telegram" style="background:#1a1a2e; border:1px solid #7c3aed; color:#a855f7; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">📨 Test Telegram</a>
             </div>
         </div>
