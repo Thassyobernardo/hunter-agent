@@ -155,6 +155,22 @@ def run_now():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/send-outreach")
+def send_outreach():
+    try:
+        import sales_agent
+        def run_outreach():
+            try:
+                sales_agent.run_outreach_cycle()
+            except Exception as e:
+                log.error(f"Outreach error: {e}")
+        
+        import threading
+        threading.Thread(target=run_outreach, daemon=True).start()
+        return jsonify({"status": "ok", "message": "Outreach process started in background"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/stats")
 def api_stats():
     try:
