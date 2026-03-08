@@ -10,14 +10,32 @@ log = logging.getLogger(__name__)
 # Regex for email extraction
 EMAIL_REGEX = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
 
-# Emails to skip
-SKIP_KEYWORDS = ["noreply", "no-reply", "example", "test", "info@google"]
+# Emails to skip (technical keywords and image extensions)
+SKIP_KEYWORDS = [
+    "noreply", "no-reply", "example", "test", "info@google",
+    ".png", ".jpg", ".gif", ".svg", ".webp", ".ico",
+    "sentry", "wixpress", "schema"
+]
+
+# Supported TLDs
+VALID_TLDS = [".lu", ".com", ".fr", ".de", ".be", ".eu", ".net", ".org"]
 
 def is_valid_email(email):
-    """Checks if email is valid and doesn't contain skip keywords."""
+    """Checks if email is valid based on length, keywords, and TLD."""
     email = email.lower()
+    
+    # Check length
+    if len(email) > 60:
+        return False
+        
+    # Check technical keywords and image extensions
     if any(kw in email for kw in SKIP_KEYWORDS):
         return False
+        
+    # Check for valid TLD
+    if not any(email.endswith(tld) for tld in VALID_TLDS):
+        return False
+        
     return True
 
 def extract_emails_from_url(url):
