@@ -1,19 +1,18 @@
 """
 LinkedIn scraper via Apify Actor (linkedin-jobs-scraper).
-No official API required. Falls back gracefully if APIFY_TOKEN not set.
+Targets dental clinics and real estate opportunities in Luxembourg.
 """
 import os
 import requests
-from datetime import datetime
-from database import upsert_lead, save_proposal
-from proposal_generator import process_lead
-
+import logging
+from database import save_lead, log_action
 import config
+
+log = logging.getLogger(__name__)
 
 SOURCE = "linkedin"
 APIFY_ACTOR = "bebity/linkedin-jobs-scraper"
 APIFY_BASE = "https://api.apify.com/v2"
-
 
 def _run_actor(keyword: str, location: str, max_items: int = 10) -> list[dict]:
     token = os.getenv("APIFY_TOKEN")
@@ -38,59 +37,48 @@ def _run_actor(keyword: str, location: str, max_items: int = 10) -> list[dict]:
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
-        print(f"[LinkedIn] Apify error for '{keyword}' in '{location}': {e}")
+        log.error(f"[LinkedIn] Apify error for '{keyword}' in '{location}': {e}")
         return []
-
 
 def scrape(keywords: list[str] = None, max_per_keyword: int = 10) -> int:
     if not os.getenv("APIFY_TOKEN"):
-        print("[LinkedIn] APIFY_TOKEN not set, skipping.")
+        log.warning("[LinkedIn] APIFY_TOKEN not set, skipping.")
         return 0
 
-    # Use keywords from config if none provided
+    # Use specific Luxembourg targeting for the test
     search_keywords = keywords if keywords else config.TARGET_SECTORS
-    locations = config.TARGET_LOCATIONS[:3] # Limit for performance
+    location = "Luxembourg"
 
     saved = 0
     for kw in search_keywords:
-        for loc in locations:
-            print(f"[LinkedIn] Searching '{kw}' in {loc}...")
-            jobs = _run_actor(kw, loc, max_per_keyword)
+        log.info(f"[LinkedIn] Searching '{kw}' in {location}...")
+        jobs = _run_actor(kw, location, max_per_keyword)
 
-            for job in jobs:
-                title = job.get("title", "No title")
-                company = job.get("companyName", "")
-                description = job.get("description", "") or job.get("descriptionText", "")
-                url = job.get("jobUrl") or job.get("url", "")
-                posted = job.get("postedAt") or job.get("publishedAt", "")
+        for job in jobs:
+            title = job.get("title", "No title")
+            company = job.get("companyName", "Unknown")
+            url = job.get("jobUrl") or job.get("url", "")
+            
+            if not url:
+                continue
 
-                if not url:
-                    continue
+            # New SQLAlchemy-based schema uses save_lead(name, email, phone, sector, location, score, source, notes)
+            success = save_lead(
+                name=company,
+                email="N/A",
+                phone="N/A",
+                sector=kw,
+                location=location,
+                score=70, # Higher score for LinkedIn jobs
+                source=SOURCE,
+                notes=f"Job Title: {title}. Link: {url}"
+            )
 
-                author = company or None
-                full_desc = f"{description}"[:4000]
+            if success:
+                saved += 1
+                log.info(f"[LinkedIn] Saved lead from {company}: {title[:60]}")
 
-                lead_id = upsert_lead(
-                    source=SOURCE,
-                    title=title,
-                    description=full_desc,
-                    url=url,
-                    author=author,
-                    posted_at=posted,
-                    keywords=kw,
-                    location=loc,
-                    sector=kw
-                )
-
-                if lead_id:
-                    try:
-                        analysis, proposal = process_lead(
-                            lead_id, SOURCE, title, full_desc
-                        )
-                        save_proposal(lead_id, analysis, proposal)
-                        saved += 1
-                        print(f"[LinkedIn] Saved lead #{lead_id}: {title[:60]}")
-                    except Exception as e:
-                        print(f"[LinkedIn] Proposal error for #{lead_id}: {e}")
-
+    if saved > 0:
+        log_action("linkedin_scan", f"Found {saved} leads in Luxembourg")
+        
     return saved
