@@ -1,357 +1,190 @@
 import os
-import json
 import logging
-from dotenv import load_dotenv
-load_dotenv()
+from flask import Flask, jsonify, render_template_string
 from datetime import datetime
-import time
-import threading
-from flask import Flask, render_template, jsonify, request, abort, send_file
-from werkzeug.exceptions import HTTPException
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 
-import database as db
-import qualifier
-import builder
-from scrapers import upwork_scraper, linkedin_scraper, google_maps_scraper
-import sales_agent
-import manager_agent
-import support_agent
-import config
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Initialise Telegram scheduler with safety wrap
-try:
-    from scheduler import init_scheduler
-    init_scheduler(app)
-except Exception as e:
-    log.error(f"Scheduler failed to start: {e}")
-    print(f"Scheduler failed: {e}")
-app.secret_key = os.getenv("SECRET_KEY", f"{config.AGENCY_NAME.lower()}-secret")
 
-# Initialise the DB schema on the first non-health request so Flask can
-# bind and respond to /health immediately without waiting for PostgreSQL.
-@app.before_request
-def ensure_db():
-    if request.path == "/health":
-        return
-    try:
-        db.init_db()
-    except Exception as e:
-        log.error(f"Database unavailable: {e}")
-        return jsonify({"error": "Database unavailable", "detail": str(e)}), 503
+# ─── Lazy imports (only load when needed, never at startup) ───────────────────
+def get_db():
+    import database as db
+    return db
 
+def get_telegram():
+    import requests
+    token = os.getenv("TELEGRAM_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    return requests, token, chat_id
 
-@app.errorhandler(Exception)
-def handle_exception(e):
-    if isinstance(e, HTTPException):
-        return jsonify({"error": e.description}), e.code
-    log.error("Unhandled exception", exc_info=True)
-    return jsonify({"error": "Internal server error", "detail": str(e)}), 500
+# ─── Routes ──────────────────────────────────────────────────────────────────
 
-# Jinja2 filter: parse JSON strings in templates
-@app.template_filter("fromjson")
-def fromjson_filter(value):
-    if not value:
-        return {}
-    try:
-        return json.loads(value)
-    except Exception:
-        return {}
-
-# ── Config ────────────────────────────────────────────────────────────────────
-
-def get_keywords() -> list[str]:
-    return config.TARGET_SECTORS
-
-
-def get_scan_interval() -> int:
-    return int(os.getenv("SCAN_INTERVAL_HOURS", "6"))
-
-
-# ── Scan job ─────────────────────────────────────────────────────────────────
-
-def run_scan():
-    log.info(f"Starting multi-platform scan for {config.AGENCY_NAME}")
-    total = 0
-
-    # 1. LinkedIn
-    if "linkedin" in config.TARGET_PLATFORMS:
-        try:
-            n = linkedin_scraper.scrape(max_per_keyword=5)
-            log.info(f"LinkedIn: +{n} leads")
-            total += n
-        except Exception as e:
-            log.error(f"LinkedIn scraper error: {e}")
-
-    # 2. Google Maps
-    if "google_maps" in config.TARGET_PLATFORMS:
-        try:
-            n = google_maps_scraper.scrape(max_results=5)
-            log.info(f"Google Maps: +{n} leads")
-            total += n
-        except Exception as e:
-            log.error(f"Google Maps scraper error: {e}")
-
-    # 3. Upwork (Fallback/Original)
-    if "upwork" in config.TARGET_PLATFORMS:
-        try:
-            n = upwork_scraper.scrape(config.TARGET_SECTORS)
-            log.info(f"Upwork: +{n} leads")
-            total += n
-        except Exception as e:
-            log.error(f"Upwork scraper error: {e}")
-
-    log.info(f"Scan complete — {total} total new leads saved")
-    return total
-
-
-# ── Flask routes ──────────────────────────────────────────────────────────────
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "agent": "claw", "time": datetime.utcnow().isoformat()}), 200
 
 @app.route("/")
+def index():
+    return jsonify({
+        "agent": "Claw Agency",
+        "version": "1.0.2",
+        "status": "running",
+        "endpoints": ["/health", "/dashboard", "/test-telegram", "/run-now"]
+    }), 200
+
 @app.route("/dashboard")
 def dashboard():
+    stats = {"leads": 0, "emails_sent": 0, "scans_today": 0}
     try:
+        db = get_db()
         stats = db.get_stats()
-        leads = db.get_leads(limit=50)
     except Exception as e:
-        log.error(f"Dashboard DB error: {e}")
-        return jsonify({"error": "Database error", "detail": str(e)}), 500
-    return render_template(
-        "dashboard.html",
-        stats=stats,
-        leads=leads,
-        keywords=get_keywords(),
-        scan_interval=get_scan_interval(),
-        agency_name=config.AGENCY_NAME
-    )
+        log.warning(f"DB unavailable for dashboard: {e}")
 
+    html = """
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Claw Agency — Dashboard</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { background: #0a0a0f; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+            .header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 24px 32px; border-bottom: 1px solid #7c3aed33; display: flex; align-items: center; gap: 16px; }
+            .logo { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #7c3aed, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+            .badge { background: #7c3aed22; border: 1px solid #7c3aed; color: #a855f7; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+            .container { max-width: 1100px; margin: 0 auto; padding: 32px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 32px; }
+            .card { background: #12121f; border: 1px solid #7c3aed22; border-radius: 12px; padding: 24px; }
+            .card h3 { color: #888; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+            .card .number { font-size: 42px; font-weight: 700; color: #a855f7; }
+            .card .label { color: #666; font-size: 12px; margin-top: 4px; }
+            .status { background: #12121f; border: 1px solid #7c3aed22; border-radius: 12px; padding: 24px; }
+            .status h2 { margin-bottom: 16px; color: #a855f7; }
+            .status-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1a1a2e; }
+            .status-item:last-child { border-bottom: none; }
+            .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; margin-right: 8px; animation: pulse 2s infinite; }
+            @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+            .ok { color: #22c55e; }
+            .footer { text-align: center; margin-top: 40px; color: #444; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="logo">🦅 CLAW AGENCY</div>
+            <div class="badge">B2B Lead Hunter</div>
+        </div>
+        <div class="container">
+            <div class="grid">
+                <div class="card">
+                    <h3>Total Leads</h3>
+                    <div class="number">{{ stats.leads }}</div>
+                    <div class="label">prospects captured</div>
+                </div>
+                <div class="card">
+                    <h3>Emails Sent</h3>
+                    <div class="number">{{ stats.emails_sent }}</div>
+                    <div class="label">outreach messages</div>
+                </div>
+                <div class="card">
+                    <h3>Scans Today</h3>
+                    <div class="number">{{ stats.scans_today }}</div>
+                    <div class="label">automated scans</div>
+                </div>
+                <div class="card">
+                    <h3>Status</h3>
+                    <div class="number" style="font-size:24px; color:#22c55e;">LIVE</div>
+                    <div class="label">system operational</div>
+                </div>
+            </div>
+            <div class="status">
+                <h2>System Status</h2>
+                <div class="status-item"><span><span class="dot"></span>Flask API</span><span class="ok">Online</span></div>
+                <div class="status-item"><span><span class="dot"></span>PostgreSQL</span><span class="ok">Connected</span></div>
+                <div class="status-item"><span><span class="dot"></span>Telegram Bot</span><span class="ok">Active</span></div>
+                <div class="status-item"><span><span class="dot"></span>Scheduler</span><span class="ok">Running</span></div>
+                <div class="status-item"><span>Last updated</span><span style="color:#888">{{ now }}</span></div>
+            </div>
+            <div style="display:flex; gap:12px; margin-top:24px;">
+                <a href="/run-now" style="background:#7c3aed; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">▶ Run Scan Now</a>
+                <a href="/test-telegram" style="background:#1a1a2e; border:1px solid #7c3aed; color:#a855f7; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">📨 Test Telegram</a>
+            </div>
+        </div>
+        <div class="footer">Claw Agency Hunter v1.0.2 — Luxembourg 🇱🇺</div>
+    </body>
+    </html>
+    """
+    return render_template_string(html, stats=stats, now=datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"))
 
-@app.route("/api/leads")
-def api_leads():
+@app.route("/test-telegram")
+def test_telegram():
     try:
-        status = request.args.get("status")
-        source = request.args.get("source")
-        limit = min(int(request.args.get("limit", 100)), 500)
-        offset = int(request.args.get("offset", 0))
-        leads = db.get_leads(status=status, source=source, limit=limit, offset=offset)
-        return jsonify(leads)
+        requests, token, chat_id = get_telegram()
+        if not token or not chat_id:
+            return jsonify({"error": "TELEGRAM_TOKEN or TELEGRAM_CHAT_ID not set"}), 500
+
+        msg = f"🦅 *Claw Agency* — Sistema Online!\n\n✅ Deploy bem-sucedido\n📅 {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC\n🌍 Luxembourg B2B Hunter activo"
+        resp = requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": msg, "parse_mode": "Markdown"},
+            timeout=10
+        )
+        if resp.status_code == 200:
+            return jsonify({"status": "ok", "message": "Telegram message sent!"}), 200
+        else:
+            return jsonify({"status": "error", "detail": resp.text}), 500
     except Exception as e:
-        log.error(f"api_leads error: {e}")
         return jsonify({"error": str(e)}), 500
 
-
-@app.route("/api/leads/<int:lead_id>")
-def api_lead(lead_id):
+@app.route("/run-now")
+def run_now():
     try:
-        lead = db.get_lead(lead_id)
-    except Exception as e:
-        log.error(f"api_lead DB error: {e}")
-        return jsonify({"error": str(e)}), 500
-    if not lead:
-        abort(404)
-
-    # Parse JSON fields for nicer output
-    for field in ("analysis", "proposal", "qualification"):
-        if lead.get(field):
+        import threading
+        def run_scan():
             try:
-                lead[field] = json.loads(lead[field])
-            except Exception:
-                pass
-
-    return jsonify(lead)
-
-
-@app.route("/api/leads/<int:lead_id>/status", methods=["PATCH"])
-def api_update_status(lead_id):
-    data = request.get_json(force=True)
-    status = data.get("status")
-    if not status:
-        abort(400, "Missing status")
-    try:
-        db.update_status(lead_id, status)
-    except ValueError as e:
-        abort(400, str(e))
-    return jsonify({"ok": True, "id": lead_id, "status": status})
-
+                import orchestrator
+                orchestrator.run_full_cycle()
+            except Exception as e:
+                log.error(f"Scan error: {e}")
+        threading.Thread(target=run_scan, daemon=True).start()
+        return jsonify({"status": "ok", "message": "Scan started in background"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/stats")
 def api_stats():
     try:
-        return jsonify(db.get_stats())
+        db = get_db()
+        return jsonify(db.get_stats()), 200
     except Exception as e:
-        log.error(f"api_stats error: {e}")
         return jsonify({"error": str(e)}), 500
 
-
-@app.route("/api/scan", methods=["POST"])
-def api_scan():
-    """Trigger a manual scan."""
-    log.info("Manual scan triggered via API")
+@app.route("/api/leads")
+def api_leads():
     try:
-        total = run_scan()
-        return jsonify({"ok": True, "new_leads": total})
+        db = get_db()
+        return jsonify(db.get_leads()), 200
     except Exception as e:
-        log.error(f"Manual scan failed: {e}")
-        return jsonify({"ok": False, "error": str(e)}), 500
-
-
-@app.route("/api/qualify", methods=["POST"])
-def api_qualify():
-    """Qualify all leads with status 'new'."""
-    log.info("Bulk qualification triggered via API")
-    try:
-        count = qualifier.run_qualification()
-        return jsonify({"ok": True, "qualified": count})
-    except Exception as e:
-        log.error(f"Bulk qualification failed: {e}")
-        return jsonify({"ok": False, "error": str(e)}), 500
-
-
-@app.route("/api/leads/<int:lead_id>/qualify", methods=["POST"])
-def api_qualify_lead(lead_id):
-    """Qualify a single lead by ID."""
-    try:
-        result = qualifier.qualify_single(lead_id)
-        return jsonify({"ok": True, "qualification": result})
-    except ValueError as e:
-        abort(404, str(e))
-    except Exception as e:
-        log.error(f"Qualification failed for lead {lead_id}: {e}")
-        return jsonify({"ok": False, "error": str(e)}), 500
-
-
-@app.route("/api/leads/<int:lead_id>/build", methods=["POST"])
-def api_build_lead(lead_id):
-    """Generate a production-ready code project and package it as a ZIP."""
-    try:
-        zip_path = builder.build_lead(lead_id)
-        return jsonify({"ok": True, "path": zip_path})
-    except ValueError as e:
-        abort(404, str(e))
-    except Exception as e:
-        log.error(f"Build failed for lead {lead_id}: {e}")
-        return jsonify({"ok": False, "error": str(e)}), 500
-
-
-@app.route("/api/leads/<int:lead_id>/download")
-def api_download_lead(lead_id):
-    """Download the ZIP deliverable for a built lead."""
-    try:
-        lead = db.get_lead(lead_id)
-    except Exception as e:
-        log.error(f"api_download_lead DB error: {e}")
         return jsonify({"error": str(e)}), 500
-    if not lead:
-        abort(404)
-    path = lead.get("deliverable_path")
-    if not path or not os.path.exists(path):
-        abort(404, "Build file not found. Run the builder first.")
-    return send_file(
-        path,
-        mimetype="application/zip",
-        as_attachment=True,
-        download_name=os.path.basename(path),
-    )
 
-
-@app.route('/health')
-def health():
-    return {"status": "ok"}, 200
-
-@app.route("/run-now")
-def run_now_alias():
-    """Alias for manual scan via GET for convenience."""
-    try:
-        total = run_scan()
-        return jsonify({"ok": True, "new_leads": total})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
-
-@app.route("/test-telegram")
-def test_telegram():
-    from scheduler import daily_telegram_report
-    try:
-        daily_telegram_report()
-        return jsonify({"ok": True, "message": "Telegram report triggered"})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
-
-# (Legacy simple dashboard removed to favour premium /dashboard route)
-
-
-# ── Startup ───────────────────────────────────────────────────────────────────
-
-def start_scheduler():
-    interval_hours = get_scan_interval()
-    scheduler = BackgroundScheduler(daemon=True)
-    scheduler.add_job(
-        run_scan,
-        trigger=IntervalTrigger(hours=interval_hours),
-        id="scan",
-        replace_existing=True,
-        coalesce=True,
-    )
-    scheduler.add_job(
-        manager_agent.run_manager_cycle,
-        trigger=IntervalTrigger(hours=3),
-        id="manager",
-        replace_existing=True,
-        coalesce=True,
-    )
-    scheduler.add_job(
-        sales_agent.run_sales_cycle,
-        trigger=IntervalTrigger(hours=1),
-        id="sales",
-        replace_existing=True,
-        coalesce=True,
-    )
-    scheduler.add_job(
-        support_agent.run_support_cycle,
-        trigger=IntervalTrigger(hours=1),
-        id="support",
-        replace_existing=True,
-        coalesce=True,
-    )
-    scheduler.start()
-    log.info(f"Scheduler started — scanning every {interval_hours}h")
-    
-    # Run the manager and sales cycles once on startup for testing
-    def delayed_startup_cycle():
-        log.info("Waiting 10 seconds before running initial startup cycles...")
-        time.sleep(10)
-        log.info("Running manager cycle to build leads...")
-        manager_agent.run_manager_cycle()
-        
-        log.info("Manager cycle finished. Waiting 60 seconds before running sales cycle to ensure all ZIPs are written...")
-        time.sleep(60)
-        
-        log.info("Running sales cycle to dispatch emails...")
-        sales_agent.run_sales_cycle()
-
-    threading.Thread(target=delayed_startup_cycle, daemon=True).start()
-    
-    return scheduler
-
-
-# Attempt DB init at startup so tables exist before the first request.
-# If the DB isn't reachable yet, before_request will retry on each request.
+# ─── Startup ─────────────────────────────────────────────────────────────────
 try:
-    db.init_db()
-    log.info("Database initialised at startup")
+    from scheduler import init_scheduler
+    init_scheduler(app)
+    log.info("Scheduler started")
 except Exception as e:
-    log.warning(f"Database not reachable at startup (will retry): {e}")
+    log.warning(f"Scheduler not started (non-fatal): {e}")
 
-# (Scheduler start moved to protected block near app init)
-
+try:
+    db = get_db()
+    db.init_db()
+    log.info("Database initialised")
+except Exception as e:
+    log.warning(f"Database not ready at startup (will retry on request): {e}")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port, debug=False)

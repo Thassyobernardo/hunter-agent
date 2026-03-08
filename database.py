@@ -1,275 +1,114 @@
 import os
-import psycopg2
-import psycopg2.extras
-from datetime import datetime, timedelta
-from contextlib import contextmanager
+import logging
+from sqlalchemy import create_engine, text
 
-_initialized = False
+log = logging.getLogger(__name__)
 
-
-def _get_dsn() -> str:
-    url = os.getenv("DATABASE_URL")
+def get_engine():
+    url = os.getenv("DATABASE_URL", "")
     if not url:
-        raise RuntimeError(
-            "DATABASE_URL is not set. "
-            "Add the Railway PostgreSQL service and link it to this app."
-        )
-    # Railway (and some other providers) emit postgres:// — psycopg2 requires
-    # the postgresql:// scheme for URI connections.
+        raise ValueError("DATABASE_URL not set")
+    # SQLAlchemy requires postgresql:// not postgres://
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
-    return url
-
-
-@contextmanager
-def get_conn():
-    conn = psycopg2.connect(_get_dsn())
-    try:
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
-
+    return create_engine(url, pool_pre_ping=True, connect_args={"connect_timeout": 10})
 
 def init_db():
-    global _initialized
-    if _initialized:
-        return
-    with get_conn() as conn:
-        cur = conn.cursor()
-
-        cur.execute("""
+    engine = get_engine()
+    with engine.connect() as conn:
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS leads (
-                id               SERIAL PRIMARY KEY,
-                source           TEXT NOT NULL,
-                title            TEXT NOT NULL,
-                description      TEXT,
-                url              TEXT UNIQUE,
-                author           TEXT,
-                posted_at        TEXT,
-                keywords         TEXT,
-                analysis         TEXT,
-                proposal         TEXT,
-                qualification    TEXT,
-                deliverable_path TEXT,
-                status           TEXT NOT NULL DEFAULT 'new',
-                sequence_stage   INTEGER DEFAULT 0,
-                last_contact_at  TEXT,
-                created_at       TEXT NOT NULL,
-                updated_at       TEXT NOT NULL
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255),
+                email VARCHAR(255),
+                phone VARCHAR(50),
+                sector VARCHAR(100),
+                location VARCHAR(100),
+                score INTEGER DEFAULT 0,
+                status VARCHAR(50) DEFAULT 'novo',
+                source VARCHAR(100),
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
             )
-        """)
-
-        cur.execute("""
+        """))
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS emails_sent (
-                id          SERIAL PRIMARY KEY,
-                lead_id     INTEGER REFERENCES leads(id) ON DELETE CASCADE,
-                subject     TEXT NOT NULL,
-                sent_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                opened      BOOLEAN NOT NULL DEFAULT FALSE,
-                replied     BOOLEAN NOT NULL DEFAULT FALSE
+                id SERIAL PRIMARY KEY,
+                lead_id INTEGER,
+                subject VARCHAR(255),
+                body TEXT,
+                sent_at TIMESTAMP DEFAULT NOW(),
+                opened BOOLEAN DEFAULT FALSE,
+                replied BOOLEAN DEFAULT FALSE
             )
-        """)
-
-        cur.execute("""
+        """))
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS agent_logs (
-                id          SERIAL PRIMARY KEY,
-                action      TEXT NOT NULL,
-                details     JSONB,
-                created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                id SERIAL PRIMARY KEY,
+                action VARCHAR(100),
+                details TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
             )
-        """)
-
-        cur.execute("""
+        """))
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS security_log (
-                id               SERIAL PRIMARY KEY,
-                threat_type      TEXT NOT NULL,
-                source           TEXT,
-                content_preview  TEXT,
-                created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                id SERIAL PRIMARY KEY,
+                threat_type VARCHAR(50),
+                source TEXT,
+                content_preview TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
             )
-        """)
+        """))
+        conn.commit()
+    log.info("Database tables ready")
 
-        cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_leads_status  ON leads(status)"
-        )
-        cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_leads_source  ON leads(source)"
-        )
-        cur.execute(
-            "CREATE INDEX IF NOT EXISTS idx_leads_created ON leads(created_at DESC)"
-        )
+def get_stats():
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            leads = conn.execute(text("SELECT COUNT(*) FROM leads")).scalar()
+            emails = conn.execute(text("SELECT COUNT(*) FROM emails_sent")).scalar()
+            logs = conn.execute(text("SELECT COUNT(*) FROM agent_logs WHERE created_at > NOW() - INTERVAL '24 hours'")).scalar()
+            return {"leads": leads, "emails_sent": emails, "scans_today": logs}
+    except Exception as e:
+        log.error(f"get_stats error: {e}")
+        return {"leads": 0, "emails_sent": 0, "scans_today": 0}
 
-        # Safe migration: add columns that may not exist in older schemas
-        for col, definition in [
-            ("qualification",    "TEXT"),
-            ("deliverable_path", "TEXT"),
-            ("sequence_stage",   "INTEGER DEFAULT 0"),
-            ("last_contact_at",  "TEXT"),
-            ("location",         "TEXT"),
-            ("sector",           "TEXT")
-        ]:
-            cur.execute(
-                f"ALTER TABLE leads ADD COLUMN IF NOT EXISTS {col} {definition}"
-            )
-    _initialized = True
+def get_leads(limit=50):
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT * FROM leads ORDER BY created_at DESC LIMIT :limit"), {"limit": limit})
+            rows = result.fetchall()
+            return [dict(r._mapping) for r in rows]
+    except Exception as e:
+        log.error(f"get_leads error: {e}")
+        return []
 
+def save_lead(name, email, phone, sector, location, score, source, notes=""):
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            conn.execute(text("""
+                INSERT INTO leads (name, email, phone, sector, location, score, source, notes)
+                VALUES (:name, :email, :phone, :sector, :location, :score, :source, :notes)
+            """), {
+                "name": name, "email": email, "phone": phone,
+                "sector": sector, "location": location,
+                "score": score, "source": source, "notes": notes
+            })
+            conn.commit()
+        return True
+    except Exception as e:
+        log.error(f"save_lead error: {e}")
+        return False
 
-def upsert_lead(source: str, title: str, description: str,
-                url: str, author: str = None, posted_at: str = None,
-                keywords: str = None, location: str = None, sector: str = None) -> int | None:
-    now = datetime.utcnow().isoformat()
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT id FROM leads WHERE url = %s", (url,))
-        if cur.fetchone():
-            return None  # already exists
-
-        cur.execute(
-            """
-            INSERT INTO leads
-                (source, title, description, url, author, posted_at, keywords,
-                 location, sector, status, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'new', %s, %s)
-            RETURNING id
-            """,
-            (source, title, description, url, author, posted_at, keywords, location, sector, now, now),
-        )
-        return cur.fetchone()[0]
-
-
-def save_proposal(lead_id: int, analysis: str, proposal: str):
-    now = datetime.utcnow().isoformat()
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE leads SET analysis=%s, proposal=%s, updated_at=%s WHERE id=%s",
-            (analysis, proposal, now, lead_id),
-        )
-
-
-def save_qualification(lead_id: int, qualification: str):
-    now = datetime.utcnow().isoformat()
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE leads SET qualification=%s, updated_at=%s WHERE id=%s",
-            (qualification, now, lead_id),
-        )
-
-
-def save_deliverable_path(lead_id: int, path: str):
-    now = datetime.utcnow().isoformat()
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE leads SET deliverable_path=%s, updated_at=%s WHERE id=%s",
-            (path, now, lead_id),
-        )
-
-
-def update_status(lead_id: int, status: str):
-    allowed = {"new", "sent", "won", "skipped", "qualified", "skip", "built", "paid", "delivered"}
-    if status not in allowed:
-        raise ValueError(f"Invalid status: {status}")
-    now = datetime.utcnow().isoformat()
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE leads SET status=%s, updated_at=%s, last_contact_at=%s WHERE id=%s",
-            (status, now, now, lead_id),
-        )
-
-def update_sequence_stage(lead_id: int, stage: int):
-    now = datetime.utcnow().isoformat()
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE leads SET sequence_stage=%s, last_contact_at=%s, updated_at=%s WHERE id=%s",
-            (stage, now, now, lead_id),
-        )
-
-def get_followup_leads(days_since: int = 2) -> list[dict]:
-    cutoff = (datetime.utcnow() - timedelta(days=days_since)).isoformat()
-    query = "SELECT * FROM leads WHERE status = 'sent' AND sequence_stage < 3 AND last_contact_at <= %s"
-    with get_conn() as conn:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(query, (cutoff,))
-        return [dict(r) for r in cur.fetchall()]
-
-
-def get_leads(status: str = None, source: str = None,
-              limit: int = 100, offset: int = 0) -> list[dict]:
-    query = "SELECT * FROM leads WHERE 1=1"
-    params: list = []
-
-    if status:
-        query += " AND status = %s"
-        params.append(status)
-    if source:
-        query += " AND source = %s"
-        params.append(source)
-
-    query += " ORDER BY created_at DESC LIMIT %s OFFSET %s"
-    params += [limit, offset]
-
-    with get_conn() as conn:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(query, params)
-        return [dict(r) for r in cur.fetchall()]
-
-
-def get_lead(lead_id: int) -> dict | None:
-    with get_conn() as conn:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM leads WHERE id = %s", (lead_id,))
-        row = cur.fetchone()
-    return dict(row) if row else None
-
-
-def count_recently_sent_leads(hours: int = 24) -> int:
-    cutoff = (datetime.utcnow() - timedelta(hours=hours)).isoformat()
-    with get_conn() as conn:
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT COUNT(*) FROM leads WHERE status = 'sent' AND updated_at >= %s",
-            (cutoff,)
-        )
-        return cur.fetchone()[0]
-
-
-def get_stats() -> dict:
-    # Use a Python-computed cutoff so we don't rely on any DB date functions
-    cutoff = (datetime.utcnow() - timedelta(days=1)).isoformat()
-
-    with get_conn() as conn:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        cur.execute("SELECT COUNT(*) AS total FROM leads")
-        total = cur.fetchone()["total"]
-
-        cur.execute(
-            "SELECT status, COUNT(*) AS cnt FROM leads GROUP BY status"
-        )
-        by_status = {r["status"]: r["cnt"] for r in cur.fetchall()}
-
-        cur.execute(
-            "SELECT source, COUNT(*) AS cnt FROM leads GROUP BY source"
-        )
-        by_source = {r["source"]: r["cnt"] for r in cur.fetchall()}
-
-        cur.execute(
-            "SELECT COUNT(*) AS cnt FROM leads WHERE created_at >= %s",
-            (cutoff,),
-        )
-        recent_24h = cur.fetchone()["cnt"]
-
-    return {
-        "total": total,
-        "by_status": by_status,
-        "by_source": by_source,
-        "recent_24h": recent_24h,
-    }
+def log_action(action, details=""):
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            conn.execute(text("INSERT INTO agent_logs (action, details) VALUES (:action, :details)"),
+                        {"action": action, "details": details})
+            conn.commit()
+    except Exception as e:
+        log.error(f"log_action error: {e}")
