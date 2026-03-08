@@ -128,7 +128,7 @@ def detect_language(lead):
 def send_outreach_email(lead):
     """Sends a single outreach email via Resend."""
     api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "Bernardo | Claw Agency <claw.agency.hq@gmail.com>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", "Claw Agency <onboarding@resend.dev>")
     
     if not api_key:
         log.error("RESEND_API_KEY not set")
@@ -178,6 +178,6 @@ def run_outreach_cycle():
         if send_outreach_email(lead):
             sent_count += 1
             # Anti-spam delay
-            time.sleep(5)
+            time.sleep(2)
             
     return sent_count
