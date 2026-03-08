@@ -128,7 +128,7 @@ def detect_language(lead):
 def send_outreach_email(lead):
     """Sends a single outreach email via Resend."""
     api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "Claw Agency <onboarding@resend.dev>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", "Bernardo | Claw Agency <bernardo@clawagency.online>")
     
     if not api_key:
         log.error("RESEND_API_KEY not set")
