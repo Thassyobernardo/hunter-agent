@@ -4,6 +4,7 @@ import requests
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import create_engine, text
+import config
 
 # ----------------------------------------------------------------------
 # Configuration – Railway environment variables
@@ -12,12 +13,15 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # Database connection (Railway provides DATABASE_URL)
-engine = create_engine(os.getenv("DATABASE_URL"))
+# We delay engine creation or wrap it to avoid crash if env is missing
+def get_engine():
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        return None
+    return create_engine(url)
 
 def send_telegram(message: str) -> None:
-    """Send a message via the Telegram Bot API.
-    Uses HTML parse mode for simple formatting.
-    """
+    """Send a message via the Telegram Bot API."""
     token = os.getenv("TELEGRAM_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
@@ -28,30 +32,33 @@ def send_telegram(message: str) -> None:
             params={"chat_id": chat_id, "text": message, "parse_mode": "HTML"},
             timeout=10,
         ).raise_for_status()
-    except Exception as e:
-        # In production you would log this; for now we silently ignore.
+    except Exception:
         pass
 
 def _fetch_daily_stats() -> dict:
     """Query the PostgreSQL DB for today’s lead/email/reply counts."""
-    with engine.connect() as conn:
-        leads_cnt = conn.execute(
-            text("SELECT COUNT(*) FROM leads WHERE created_at >= CURRENT_DATE")
-        ).scalar()
-        emails_cnt = conn.execute(
-            text("SELECT COUNT(*) FROM emails_sent WHERE sent_at >= CURRENT_DATE")
-        ).scalar()
-        replies_cnt = conn.execute(
-            text(
-                "SELECT COUNT(*) FROM emails_sent "
-                "WHERE opened = true AND replied = true "
-                "AND sent_at >= CURRENT_DATE"
-            )
-        ).scalar()
-    return {"leads": leads_cnt, "emails": emails_cnt, "replies": replies_cnt}
-
-<<<<<<< HEAD
-import config
+    engine = get_engine()
+    if not engine:
+        return {"leads": 0, "emails": 0, "replies": 0}
+        
+    try:
+        with engine.connect() as conn:
+            leads_cnt = conn.execute(
+                text("SELECT COUNT(*) FROM leads WHERE created_at >= CURRENT_DATE")
+            ).scalar()
+            emails_cnt = conn.execute(
+                text("SELECT COUNT(*) FROM emails_sent WHERE sent_at >= CURRENT_DATE")
+            ).scalar()
+            replies_cnt = conn.execute(
+                text(
+                    "SELECT COUNT(*) FROM emails_sent "
+                    "WHERE opened = true AND replied = true "
+                    "AND sent_at >= CURRENT_DATE"
+                )
+            ).scalar()
+        return {"leads": leads_cnt, "emails": emails_cnt, "replies": replies_cnt}
+    except Exception:
+        return {"leads": 0, "emails": 0, "replies": 0}
 
 def daily_telegram_report() -> None:
     """Compose the daily report and send it via Telegram."""
@@ -68,16 +75,6 @@ def daily_telegram_report() -> None:
         f"📨 Emails envoyés: {stats['emails']}\n"
         f"💬 Réponses reçues: {stats['replies']}\n"
         f"📅 Système actif (Luxembourg)"
-=======
-def daily_telegram_report() -> None:
-    """Compose the daily report and send it via Telegram."""
-    stats = _fetch_daily_stats()
-    message = (
-        f"📊 <b>Relatório Diário</b> (Luxemburgo)\n"
-        f"🔍 Leads encontrados: {stats['leads']}\n"
-        f"📨 Emails enviados: {stats['emails']}\n"
-        f"💬 Respostas recebidas: {stats['replies']}"
->>>>>>> 86247a63009975daf0fdd0e5cab75e22326c39f4
     )
     send_telegram(message)
 
@@ -97,4 +94,5 @@ def init_scheduler(app):
 
     @app.teardown_appcontext
     def shutdown_scheduler(exception=None):
-        scheduler.shutdown()
+        if scheduler.running:
+            scheduler.shutdown()

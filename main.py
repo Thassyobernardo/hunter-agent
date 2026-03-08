@@ -27,9 +27,13 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Initialise Telegram scheduler
-from scheduler import init_scheduler
-init_scheduler(app)
+# Initialise Telegram scheduler with safety wrap
+try:
+    from scheduler import init_scheduler
+    init_scheduler(app)
+except Exception as e:
+    log.error(f"Scheduler failed to start: {e}")
+    print(f"Scheduler failed: {e}")
 app.secret_key = os.getenv("SECRET_KEY", f"{config.AGENCY_NAME.lower()}-secret")
 
 # Initialise the DB schema on the first non-health request so Flask can
@@ -258,14 +262,9 @@ def api_download_lead(lead_id):
     )
 
 
-@app.route("/health")
+@app.route('/health')
 def health():
-    return jsonify({
-        "status": "ok",
-        "agent": "claw",
-        "version": "1.0.1-claw-b2b",
-        "time": datetime.utcnow().isoformat()
-    })
+    return {"status": "ok"}, 200
 
 @app.route("/run-now")
 def run_now_alias():
@@ -350,8 +349,7 @@ try:
 except Exception as e:
     log.warning(f"Database not reachable at startup (will retry): {e}")
 
-# Start the scheduler; the first scan fires after SCAN_INTERVAL_HOURS.
-# _scheduler = start_scheduler()
+# (Scheduler start moved to protected block near app init)
 
 
 if __name__ == "__main__":
