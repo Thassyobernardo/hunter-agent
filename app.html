@@ -1857,7 +1857,18 @@
         lang_pt: "Português",
         lang_fr: "Français",
         lang_de: "Deutsch",
-        lang_es: "Español"
+        lang_es: "Español",
+        dental: "Clínicas dentales",
+        real_estate: "Inmobiliaria",
+        restaurants: "Restaurantes",
+        lawyers: "Abogados",
+        consulting: "Consultoría",
+        health: "Salud",
+        ecommerce: "E-commerce",
+        other: "Otro",
+        tone_prof: "Profesional",
+        tone_casual: "Casual",
+        tone_direct: "Directo"
       }
     };
 
@@ -1867,7 +1878,7 @@
     function t(key) { return TRANSLATIONS[CURR_LANG][key] || key; }
     function updateUI() {
       document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
-      document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18n - ph));
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18nPh));
     }
     function setLang(lang) { CURR_LANG = lang; localStorage.setItem('claw_lang', lang); updateUI(); document.querySelectorAll('.lang-opt').forEach(opt => opt.classList.toggle('active', opt.dataset.lang === lang)); }
 
@@ -1880,7 +1891,7 @@
       const email = document.getElementById('login-email').value.trim().toLowerCase();
       const pass = document.getElementById('login-pass').value;
       const err = document.getElementById('login-error'); err.classList.remove('show');
-      if (!email || !pass) { err.textContent = 'Preenche todos os campos'; err.classList.add('show'); return; }
+      if (!email || !pass) { err.textContent = t('auth_err_fields'); err.classList.add('show'); return; }
       const btn = event.target; setBtn(btn, true);
       try {
         const r = await fetch(`${API}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) });
@@ -1896,8 +1907,8 @@
       const email = document.getElementById('reg-email').value.trim().toLowerCase();
       const pass = document.getElementById('reg-pass').value;
       const err = document.getElementById('reg-error'); err.classList.remove('show');
-      if (!name || !email || !pass) { err.textContent = 'Preenche todos os campos'; err.classList.add('show'); return; }
-      if (pass.length < 8) { err.textContent = 'Password mínimo 8 caracteres'; err.classList.add('show'); return; }
+      if (!name || !email || !pass) { err.textContent = t('auth_err_fields'); err.classList.add('show'); return; }
+      if (pass.length < 8) { err.textContent = t('auth_err_pass'); err.classList.add('show'); return; }
       const btn = event.target; setBtn(btn, true);
       try {
         const r = await fetch(`${API}/api/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, company, email, password: pass }) });
@@ -1911,17 +1922,16 @@
     function pickTag(btn, key, val) { btn.closest('.tag-grid').querySelectorAll('.tag-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); OB[key] = val; }
     function pickLang(card, lang) { card.closest('.lang-grid').querySelectorAll('.lang-card').forEach(c => c.classList.remove('selected')); card.classList.add('selected'); OB.language = lang; }
     function goStep(n) {
-      if (n === 1 && !OB.sector) { toast('Escolhe um sector', 'error'); return; }
-      if (n === 2) { const l = document.getElementById('ob-loc').value.trim(); if (!l) { toast('Indica a localização', 'error'); return; } OB.location = l; }
+      if (n === 1 && !OB.sector) { toast(t('ob_toast_sector'), 'error'); return; }
+      if (n === 2) { const l = document.getElementById('ob-loc').value.trim(); if (!l) { toast(t('ob_toast_loc'), 'error'); return; } OB.location = l; }
       document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
       document.getElementById(`ob-${n}`).classList.add('active');
       document.querySelectorAll('.ob-step-dot').forEach((d, i) => { d.classList.toggle('active', i === n); d.classList.toggle('done', i < n); });
     }
     async function finishOnboarding() {
-      if (!OB.language) { toast('Escolhe um idioma', 'error'); return; }
       const btn = document.getElementById('ob-finish-btn'); setBtn(btn, true);
       try { const token = localStorage.getItem('claw_token'); await fetch(`${API}/api/agent-config`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(OB) }); } catch (e) { }
-      setBtn(btn, false); toast('Agente configurado! 🎯'); show('app-screen'); loadDashboard();
+      setBtn(btn, false); toast(t('ob_toast_done')); show('app-screen'); loadDashboard();
     }
     function loadApp(data) {
       USER = data;
@@ -1941,9 +1951,9 @@
     }
     function renderTable(id, leads, limit) {
       const el = document.getElementById(id);
-      if (!leads || !leads.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">◎</div><div class="empty-title">Nenhum lead ainda</div><div>O agente está a preparar a primeira prospeção</div></div>`; return; }
+      if (!leads || !leads.length) { el.innerHTML = `<div class="empty"><div class="empty-icon">◎</div><div class="empty-title">${t('empty_no_leads')}</div><div>${t('empty_preparing')}</div></div>`; return; }
       const rows = leads.slice(0, limit || 999);
-      el.innerHTML = `<table><thead><tr><th>Nome</th><th>Sector</th><th>Email</th><th>Status</th></tr></thead><tbody>${rows.map(l => `<tr><td>${l.name || '—'}</td><td>${l.sector || '—'}</td><td style="font-family:monospace;font-size:12px">${l.email || '—'}</td><td><span class="pill pill-${l.status || 'novo'}">${l.status || 'novo'}</span></td></tr>`).join('')}</tbody></table>`;
+      el.innerHTML = `<table><thead><tr><th data-i18n="tbl_name">${t('tbl_name')}</th><th data-i18n="tbl_sector">${t('tbl_sector')}</th><th data-i18n="tbl_email">${t('tbl_email')}</th><th data-i18n="tbl_status">${t('tbl_status')}</th></tr></thead><tbody>${rows.map(l => `<tr><td>${l.name || '—'}</td><td>${l.sector || '—'}</td><td style="font-family:monospace;font-size:12px">${l.email || '—'}</td><td><span class="pill pill-${l.status || 'novo'}">${t('status_' + (l.status || 'novo'))}</span></td></tr>`).join('')}</tbody></table>`;
     }
     async function openPanel(name, el) {
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
