@@ -209,9 +209,11 @@ def api_billing_portal():
 @app.route('/app')
 def serve_app():
     try:
-        with open(os.path.join(os.path.dirname(__file__), 'app.html'), 'r') as f:
+        path = os.path.join(os.path.dirname(__file__), 'app.html')
+        with open(path, 'r', encoding='utf-8') as f:
             return f.read(), 200, {'Content-Type': 'text/html'}
-    except:
+    except Exception as e:
+        log.error(f"App serving error: {e}")
         return "App not found", 404
 
 # ─── EXISTING ROUTES ───────────────────────────────────────────────────────────
