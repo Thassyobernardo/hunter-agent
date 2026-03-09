@@ -216,6 +216,13 @@ def serve_app():
         log.error(f"App serving error: {e}")
         return "App not found", 404
 
+@app.route('/test-app')
+def test_app():
+    import os
+    path = os.path.join(os.path.dirname(__file__), 'app.html')
+    exists = os.path.exists(path)
+    return f"path={path} | exists={exists} | cwd={os.getcwd()}"
+
 # ─── EXISTING ROUTES ───────────────────────────────────────────────────────────
 @app.route("/health")
 def health():
