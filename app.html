@@ -1,259 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Claw Agency — AI Prospecting Platform</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Epilogue:wght@300;400;500;600&display=swap"
-    rel="stylesheet">
-  <style>
-    :root {
-      --white: #f7f5f0;
-      --ink: #0d0d0d;
-      --red: #c0392b;
-      --border: #ddd9d3;
-      --warm: #f0ebe3;
-      --muted: #8a8580;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLAW — Autonomous Arbitrage Copilot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@600&family=Inter:wght@300;400;600&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #09090b; --card: #18181b; --accent: #10b981; --accent-hover: #059669; --danger: #ef4444; --text: #e4e4e7; --dim: #a1a1aa; --border: #27272a; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; height: 100vh; overflow: hidden; }
+        
+        /* LOGIN SCREEN STYLES */
+        #login-screen { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: var(--card); border: 1px solid var(--border); padding: 40px; border-radius: 8px; width: 100%; max-width: 380px; text-align: center; }
+        .login-logo { font-family: 'Clash Display'; font-size: 28px; color: var(--text); margin-bottom: 8px; letter-spacing: 1px; }
+        .login-logo span { color: #c0392b; }
+        .login-sub { color: var(--dim); font-size: 13px; margin-bottom: 32px; }
+        .login-input { width: 100%; background: #000; border: 1px solid var(--border); color: white; padding: 14px; border-radius: 4px; margin-bottom: 16px; font-family: 'Inter'; outline: none; box-sizing: border-box;}
+        .login-input:focus { border-color: var(--accent); }
+        .login-btn { width: 100%; background: white; color: black; border: none; padding: 14px; border-radius: 4px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .login-btn:hover { background: #c0392b; color: white; }
+        #login-error { color: var(--danger); font-size: 13px; margin-top: 16px; display: none; }
 
-    *,
-    *::before,
-    *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+        /* DASHBOARD STYLES */
+        #app-dashboard { display: none; width: 100%; height: 100vh; }
+        .sidebar { width: 260px; background: #09090b; border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; }
+        .logo { font-family: 'Clash Display'; font-size: 24px; color: var(--text); margin-bottom: 40px; letter-spacing: 1px; }
+        .logo span { color: var(--accent); }
+        .nav-item { padding: 12px 16px; cursor: pointer; color: var(--dim); transition: 0.2s; border-radius: 6px; margin-bottom: 8px; font-size: 14px; font-weight: 400; }
+        .nav-item:hover, .nav-item.active { background: #27272a; color: white; border-left: 3px solid var(--accent); }
 
-    body {
-      background: var(--white);
-      color: var(--ink);
-      font-family: 'Epilogue', sans-serif;
-      font-weight: 300;
-      min-height: 100vh;
-    }
-
-    .screen {
-      display: none;
-      min-height: 100vh;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    #app-screen.active {
-      display: flex;
-    }
-
-    .sidebar {
-      width: 248px;
-      background: var(--white);
-      border-right: 1px solid var(--border);
-      position: fixed;
-      height: 100vh;
-    }
-
-    .sidebar-logo {
-      padding: 28px 24px;
-      font-family: 'Clash Display', sans-serif;
-      font-weight: 700;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .sidebar-logo span {
-      color: var(--red);
-    }
-
-    .sidebar-nav {
-      padding: 8px 12px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 12px;
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .nav-item.active {
-      background: var(--warm);
-      color: var(--ink);
-      border-left: 2px solid var(--red);
-    }
-
-    .main {
-      margin-left: 248px;
-      flex: 1;
-      padding: 44px 48px;
-    }
-
-    .panel {
-      display: none;
-    }
-
-    .panel.active {
-      display: block;
-    }
-
-    .cfg-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .cfg-card {
-      padding: 28px;
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-    }
-
-    .cfg-card-title {
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 20px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-    }
-
-    .cfg-field {
-      margin-bottom: 18px;
-    }
-
-    .cfg-field label {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .cfg-field input,
-    .cfg-field select,
-    .cfg-field textarea {
-      width: 100%;
-      padding: 11px;
-      background: var(--warm);
-      border: 1px solid var(--border);
-      font-family: inherit;
-      font-size: 13px;
-      outline: none;
-    }
-
-    .cfg-field textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-
-    .skill-badge {
-      background: var(--red);
-      color: white;
-      padding: 2px 6px;
-      border-radius: 2px;
-      font-size: 9px;
-      vertical-align: middle;
-      margin-left: 5px;
-    }
-
-    .btn-save {
-      padding: 12px 28px;
-      background: var(--ink);
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      transition: 0.2s;
-    }
-
-    .btn-save:hover {
-      background: var(--red);
-    }
-  </style>
+        .main { flex: 1; padding: 40px; overflow-y: auto; background: #09090b; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        
+        .job-feed { display: flex; flex-direction: column; gap: 24px; }
+        .job-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px; transition: 0.2s; }
+        .job-card:hover { border-color: #3f3f46; }
+        
+        .job-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .job-title { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+        .job-meta { font-size: 13px; color: var(--dim); display: flex; gap: 16px; }
+        .badge { background: #27272a; padding: 4px 10px; border-radius: 4px; font-size: 12px; color: #e4e4e7; font-family: 'Fira Code', monospace; border: 1px solid #3f3f46; }
+        
+        .ai-solution { background: #000; border: 1px solid #27272a; border-radius: 6px; padding: 16px; font-family: 'Fira Code', monospace; font-size: 13px; color: #a1a1aa; line-height: 1.5; }
+        .ai-solution span.highlight { color: var(--accent); }
+        
+        .actions { display: flex; gap: 12px; margin-top: 8px; }
+        .btn { padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; border: none; transition: 0.2s; }
+        .btn-approve { background: var(--accent); color: white; }
+        .btn-approve:hover { background: var(--accent-hover); }
+        .btn-reject { background: transparent; color: var(--text); border: 1px solid var(--border); }
+        .btn-reject:hover { background: #27272a; color: var(--danger); border-color: var(--danger); }
+    </style>
 </head>
-
 <body>
-  <div id="app-screen" class="screen active">
-    <div class="sidebar">
-      <div class="sidebar-logo">CLAW <span>AGENCY</span></div>
-      <nav class="sidebar-nav">
-        <div class="nav-item active" onclick="openPanel('dashboard',this)">◈ Dashboard</div>
-        <div class="nav-item" onclick="openPanel('leads',this)">◎ Leads</div>
-        <div class="nav-item" onclick="openPanel('agent',this)">◉ Agent Config</div>
-        <div class="nav-item" onclick="openPanel('pricing',this)">◇ Pricing</div>
-      </nav>
-    </div>
-    <div class="main">
-      <div id="panel-agent" class="panel active">
-        <div class="cfg-grid">
-          <div class="cfg-card">
-            <div class="cfg-card-title">Targeting</div>
-            <div class="cfg-field"><label>Target Sector</label><input type="text" id="cfg-sector"
-                placeholder="e.g. Dental Clinics"></div>
-            <div class="cfg-field"><label>Location</label><input type="text" id="cfg-location"
-                placeholder="e.g. Luxembourg"></div>
-          </div>
-          <div class="cfg-card">
-            <div class="cfg-card-title">Outreach Settings</div>
-            <div class="cfg-field"><label>Language</label><select id="cfg-lang">
-                <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="pt">Português</option>
-              </select></div>
-            <div class="cfg-field"><label>Reply-to Email</label><input type="email" id="cfg-reply"
-                placeholder="bernardo@clawagency.online"></div>
-          </div>
-          <div class="cfg-card" style="grid-column: 1/-1">
-            <div class="cfg-card-title">AI Adaptive Writing Skill <span class="skill-badge">ADVANCED</span></div>
-            <div class="cfg-field">
-              <label>Custom Instructions (The Agent's Brain)</label>
-              <textarea id="cfg-instructions"
-                placeholder="Example: Be professional but direct. Mention we are in Luxembourg. Focus on how our AI saves 10 hours of prospecting weekly..."></textarea>
-            </div>
-            <button class="btn-save" onclick="saveConfig()">Save & Sync Skill</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <script>
-        const API = 'https://claw-agency-production.up.railway.app';
-        async function saveConfig() {
-            const btn = event.target; btn.textContent = 'SYNCING...';
-            const config = {
-                sector: document.getElementById('cfg-sector').value,
-                location: document.getElementById('cfg-location').value,
-                language: document.getElementById('cfg-lang').value,
-                reply_email: document.getElementById('cfg-reply').value,
-                instructions: document.getElementById('cfg-instructions').value
-            };
-            try {
-                const token = localStorage.getItem('claw_token');
-                await fetch(`${API}/api/agent-config`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(config)
-                });
-                alert('Skill Synced Successfully!');
-            } catch (e) { alert('Sync Error'); }
-            btn.textContent = 'SAVE & SYNC SKILL';
-        }
-        function openPanel(name, el) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('panel-' + name).classList.add('active');
-            el.classList.add('active');
-        }
-  </script>
-</body>
 
+    <div id="login-screen">
+        <div class="login-box">
+            <div class="login-logo"><span>CLAW</span> AGENCY</div>
+            <div class="login-sub">Restricted Area. Enterprise Access Only.</div>
+            <form onsubmit="verifyLogin(event)">
+                <input type="email" id="email" class="login-input" placeholder="Admin Email" required>
+                <input type="password" id="password" class="login-input" placeholder="Password" required>
+                <button type="submit" class="login-btn">Secure Login</button>
+                <div id="login-error">Acesso Negado. Credenciais inválidas.</div>
+            </form>
+            <a href="/" style="display:block; margin-top: 20px; color: var(--dim); font-size: 12px; text-decoration: none;">← Return to Public Site</a>
+        </div>
+    </div>
+
+    <div id="app-dashboard">
+        <div class="sidebar">
+            <div class="logo">CLAW <span>COPILOT</span></div>
+            <div class="nav-item active">🎯 Live Job Feed</div>
+            <div class="nav-item">✅ My Approvals</div>
+            <div class="nav-item">🤖 Agent Factory</div>
+            <div class="nav-item">💰 Revenue Tracker</div>
+            <a href="/" class="nav-item" style="margin-top: auto; text-decoration: none; border-left: none;">← Exit to Public Site</a>
+        </div>
+        <div class="main">
+            <div class="header">
+                <h1>Pending Approvals (Drafts)</h1>
+                <div style="color: var(--dim); font-size: 14px;">Status: <span style="color: var(--accent);">Scanning Global Opportunities...</span></div>
+            </div>
+
+            <div class="job-feed" id="feed">
+                <div class="job-card" id="job-1">
+                    <div class="job-header">
+                        <div>
+                            <div class="job-title">Power BI Dashboard for Logistics - Needs DAX Fix</div>
+                            <div class="job-meta">
+                                <span>📍 Upwork</span>
+                                <span>💰 $450 USD</span>
+                                <span>🌐 English</span>
+                                <span>⏱️ 12 mins ago</span>
+                            </div>
+                        </div>
+                        <span class="badge">Match: 98%</span>
+                    </div>
+                    <div class="ai-solution">
+                        <span class="highlight">// CLAW generated proposal draft:</span><br><br>
+                        Hi there, I noticed you're struggling with the DAX formulas for your logistics churn tracking. The issue is likely how your current model handles date contexts across multiple fact tables.<br><br>
+                        <span class="highlight">Here is the PoC (Proof of Concept) logic I would implement to solve this instantly:</span><br>
+                        <code>CALCULATE( [Total Shipments], USERELATIONSHIP('Date'[Date], 'Logistics'[DeliveryDate]) )</code><br><br>
+                        I can have the full dashboard operational by tomorrow. Let me know if you want to see a live demo of my previous logistics projects.
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-approve" onclick="approveJob('job-1')">APPROVE & SEND BROWSER BOT</button>
+                        <button class="btn btn-reject" onclick="rejectJob('job-1')">REJECT (LOW VALUE)</button>
+                    </div>
+                </div>
+
+                <div class="job-card" id="job-2">
+                    <div class="job-header">
+                        <div>
+                            <div class="job-title">Automatisation Python pour extraction de factures</div>
+                            <div class="job-meta">
+                                <span>📍 Freelancer.com</span>
+                                <span>💰 €300 EUR</span>
+                                <span>🌐 French</span>
+                                <span>⏱️ 24 mins ago</span>
+                            </div>
+                        </div>
+                        <span class="badge">Match: 95%</span>
+                    </div>
+                    <div class="ai-solution">
+                        <span class="highlight">// CLAW generated proposal draft (French Native):</span><br><br>
+                        Bonjour, j'ai vu que vous avez besoin d'extraire des données de vos factures PDF. J'ai déjà un script prêt qui utilise OCR et Regex pour structurer ces données en CSV/Excel.<br><br>
+                        <span class="highlight">Voici comment j'isole les montants totaux dans votre cas :</span><br>
+                        <code>re.findall(r'Total\s(?:TTC)?\s?[:\-]?\s?(\d+[\.,]\d{2})', pdf_text, re.IGNORECASE)</code><br><br>
+                        Je peux adapter ce script à votre format exact en moins de 2 heures.
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-approve" onclick="approveJob('job-2')">APPROVE & SEND BROWSER BOT</button>
+                        <button class="btn btn-reject" onclick="rejectJob('job-2')">REJECT (LOW VALUE)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função de Login
+        function verifyLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.toLowerCase();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('login-error');
+
+            if (email === 'thassyo@gmail.com' && password === 'admin123') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-dashboard').style.display = 'flex';
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // Função que aciona o robô no Railway
+        async function processJob(id, actionType) {
+            const card = document.getElementById(id);
+            card.style.opacity = '0.5';
+            card.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--dim);">⏳ Conectando ao CLAW Backend...</div>`;
+
+            try {
+                // Bate diretamente na rota local (como está no mesmo servidor, não precisa do link completo)
+                const response = await fetch(`/api/copilot/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ job_id: id, action: actionType })
+                });
+
+                if (actionType === 'approve') {
+                    card.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--accent); font-weight: 600;">🚀 PROPOSTA ENVIADA! Verifique os logs no Railway.</div>`;
+                } else {
+                    card.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--danger);">🗑️ Job Rejeitado. IA Atualizada.</div>`;
+                }
+                setTimeout(() => card.style.display = 'none', 3000);
+
+            } catch (error) {
+                card.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--danger);">❌ Erro de Conexão com o Servidor.</div>`;
+                setTimeout(() => card.style.opacity = '1', 3000);
+            }
+        }
+
+        function approveJob(id) { processJob(id, 'approve'); }
+        function rejectJob(id) { processJob(id, 'reject'); }
+    </script>
+</body>
 </html>
